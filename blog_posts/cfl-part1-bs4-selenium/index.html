@@ -71,13 +71,19 @@
             </p>
             <p>
                 <h4>The Goal</h4>
-                We want to build a system that can gather play-by-play information from the CFL's website, store it in an intelligible manner, and extract new insights.
+                We want to build a system that can
+                <ol>
+                    <li>gather play-by-play information from the CFL's website</li>
+                    <li>store it in an intelligible manner</li>
+                    <li>extract new insights</li>
+                </ol>
                 <br>
                 Specifically, I had a colleague interested in 3rd down plays that don't result in punts (the CFL's possessions only have 3 downs compared to the standard 4 downs).
                 <br>
                 The end result of the full source code can be found <a href-"https://github.com/stevenwu4/CFL">here: https://github.com/stevenwu4/CFL</a>
             </p>
             <p>
+                <h4>Part 1:</h4>
                 <h4>Implementation of the Scraper</h4>
                 We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>. All a web scraper does is open up a URL's content, much like a human would with a browser like Google Chrome or Mozilla Firefox, and proceed to take information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game: "Medlock kicks off", "Burris pass to", "Burris incomplete pass". None of these will have any results found.<br>
                 INSERT SCREENSHOT
@@ -189,8 +195,9 @@ def get_game_rows_from_url(url):
             </ul>
             </p>
             <p>
-                <h4>Implementation of the Analysis Script</h4>
+                Now that we're done implementing our scraper, we need to use it to grab the data. Now, we *could* just manually take every URL for a season, and call this script from the command line to have the play-by-play we want. However, it's good practice to automate as much as possible in our workflow. In the next part of this series, I will go over how to flesh out a basic system that will take care of the storage of our data using a NoSQL database called <a href="https://www.mongodb.org/">MongoDB</a>.
 
+                <a href="../cfl-part2-mongo-storage">Click here for Part 2 in this series</a>
             </p>
         </div>
     <footer>
