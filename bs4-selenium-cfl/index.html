@@ -1,0 +1,195 @@
+<!doctype html>
+
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Steven Wu</title>
+
+        <meta name="author" content="Steven Wu">
+        <meta name="description" content="Personal website for Steven Wu, with blog posts about data">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../css/minimal.css">
+
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+          ga('create', 'UA-58456323-1', 'auto');
+          ga('send', 'pageview');
+        </script>
+    </head>
+
+    <body>
+        <div id="banner"></div>
+        <header id="header" role="banner">
+            <h1><a href="./about/">Steven Wu</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="../">About</a></li>
+                    <li><a href="../blog_posts/">Blog</a></li>
+                    <li><a href="https://github.com/stevenwu4">GitHub</a></li>
+                    <li><a href="https://www.linkedin.com/profile/view?id=165873568">LinkedIn</a></li>
+                    <li><a href="mailto:steven.wu.work@gmail.com?subject=Emailing from your website">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <h2>Data Scraping CFL Play-By-Play Using BeautifulSoup & Selenium in Python</h2>
+        <h4>July 27, 2015</h4>
+
+        <div>
+            <p>
+                My first foray into sports statistics was a research project in 3rd year for STAT5703, Carleton's Data Mining course. This was our first chance at picking our own dataset to work with aside from the canonical cars and housing ones that come bundled with R. When the choices were out for pickings, my partner and I immediately jumped at <a href="http://archive.advancedfootballanalytics.com/2010/04/play-by-play-data.html">Brian Burke's NFL play-by-play</a>. We pored hours into creating new variables, sorting the data into a different format easier for analysis, and finally creating two models; one for probability of winning a given game and the other for number of wins in a given season. It was really satisfying to try a hand at what had always been a blackbox and somewhat succeeding.
+            </p>
+            <p>
+                Amidst this satisfaction, a few things nagged at me. It was really annoying to make the formulas in Excel and do countless actions of copying/pasting. It would have been nice if the data was in the format my partner and I preferred to work with (each season data was in one Excel file; we ended up splitting each up to an Excel file per team per season). I also follow the NBA way more than the NFL, but unfortunately I couldn't find an NBA dataset online as nicely complete as Brian Burke's NFL one. This feeling of restriction, of being handcuffed and limited by the data I was working with, was a theme throughout the rest of the class. This is *not* a knock on the class, as there was hardly enough time to cover what to do once you have obtained the data - let alone how you go about obtaining it (it is probably the case that many people interested in the field of data mining do not care one bit about how you obtain the data). However, it's my contention that web scraping and the associated data processing skills are a necessary part of the toolbox. It allows you to pursue your own ideas - create your own hypothesis to prove or disprove, gather any information you find relevant to your investigation, and format it in whatever way you believe will maximize your success in finding your findings.
+            </p>
+            <p>
+                The aim of this tutorial is to be the tutorial I wish I had stumbled upon when choosing my topic for my aforementioned research project. There are plenty of web scraping 101 tutorials out there: this will be one with an application to sports.
+
+                The developer environment going forward with this tutorial will be:
+                <ul>
+                    <li>Python 2.7.5</li>
+                    <li>Mac OS X</li>
+                </ul>
+                where you can find the definitive guide on installation <a href="http://docs.python-guide.org/en/latest/starting/install/osx/">here</a>. If this is new territory for you, ignore the section on virtual environments. Once you have <em>pip</em> installed, you can run the following commands to install the required libraries to complete this walkthrough.
+                (If you have a different version of Python, or are on a different Operating System, the necessary tweaks to follow this tutorial are minor and can be found through some Google searches.)
+                <code>
+                    pip install BeautifulSoup4<br>
+                    pip install selenium<br>
+                    pip install docopt<br>
+                </code>
+                Before we jump into it, there's two guidelines to be conscious of:
+                <ol>
+                    <li>The site's terms and conditions;
+                    some sites explicitly disallow scraping of their content.</li>
+                    <li>Every site also a robots.txt file, which contains rules about which crawlers are allowed/disallowed as well as a crawl delay. Always respect the crawl delay!</li>
+                </ol>
+            </p>
+            <p>
+                <h4>The Goal</h4>
+                We want to build a system that can gather play-by-play information from the CFL's website, store it in an intelligible manner, and extract new insights.
+                <br>
+                Specifically, I had a colleague interested in 3rd down plays that don't result in punts (the CFL's possessions only have 3 downs compared to the standard 4 downs).
+                <br>
+                The end result of the full source code can be found <a href-"https://github.com/stevenwu4/CFL">here: https://github.com/stevenwu4/CFL</a>
+            </p>
+            <p>
+                <h4>Implementation of the Scraper</h4>
+                We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>. All a web scraper does is open up a URL's content, much like a human would with a browser like Google Chrome or Mozilla Firefox, and proceed to take information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game: "Medlock kicks off", "Burris pass to", "Burris incomplete pass". None of these will have any results found.<br>
+                INSERT SCREENSHOT
+                <br>
+                That's weird; if we click the <b>Play by Play</b> button, we see it. How can it be there and not be there? Pay attention to the URL; if it changed, we could just follow the redirect to the new URL and scrape that URL's content - but it doesn't change.
+                <br>
+                To go ahead with one solution to this problem, we're going to be using a package called <em><a href="https://selenium-python.readthedocs.org/getting-started.html">Selenium</a></em>. Selenium allows us to use Python to programatically open up a browser and interact with the different elements of the page. Specifically, it will allow us to click the elusive button that contains the play-by-play HTML we desire.
+                <br>
+                <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
+                <code>
+                    import time<br>
+                    import csv<br>
+                    from bs4 import BeautifulSoup<br>
+                    from selenium import webdriver<br>
+                    <br>
+                    PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'<br>
+                </code>
+                The <em>time</em> library is necessary to respect the rules of http://www.cfl.ca/robots.txt. At the time of this writing, all crawlers are allowed but there is a crawl delay of 2. The <em>time</em> library has a function, <em>sleep</em>, which lets us delay our crawls.
+                <br>
+                Finally, the constant <em>PLAYBYPLAY_BTN_XPATH</em> is an <a href="https://developer.mozilla.org/en-US/docs/Web/XPath">XPath</a> to specifically locate the <b>Play by Play</b> button.
+                <br><br>
+                Now we can start creating the function.
+                <code><pre>
+def get_game_rows_from_url(url):
+    driver = webdriver.Firefox()
+    driver.get(url)
+    time.sleep(10)
+    playbyplay_btn = driver.find_element_by_xpath(PLAYBYPLAY_BTN_XPATH)
+    playbyplay_btn.click()
+    soup = BeautifulSoup(driver.page_source)
+                </pre></code>
+                Our function <em>get_game_rows_from_url</em> will receive a <em>url</em> as input. We use the <em>Selenium</em> package's <em>webdriver</em> to open up an instance of Firefox on your computer (note: you need <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox downloaded</a> for this to work!). <em>find_element_by_xpath</em> is a function of the webdriver Firefox instance that returns an element of the HTML based on the XPath you give it (in our case, the XPath to the <b>Play by Play</b> button). This returned element has a function <em>click</em> that clicks our button for us. We load the resulting HTML into <em>BeautifulSoup</em> to focus on the scraping.
+                <code><pre>
+    # Get away/home teams
+    away_div = soup.find('div', id='awayteam')
+    away_team = away_div.find('h3', class_='cityname').text
+    home_div = soup.find('div', id='hometeam')
+    home_team = home_div.find('h3', class_='cityname').text
+
+    # Get game rows
+    pbp_div = soup.find('div', id='stat-game-pbp')
+    pbp_inner_div = pbp_div.find('div', id='pbp-stats')
+    pbp_table = pbp_inner_div.find('table', id='pbp-table')
+    rows = pbp_table.find_all('tr')
+
+    all_times = []
+    all_downs = []
+    all_types = []
+    all_yards = []
+    all_details = []
+    all_aways = []
+    all_homes = []
+
+    for row in rows:
+        # The rows we care about don't have the th tag
+        if row.th:
+            continue
+        cells = row.find_all('td')
+        all_times.append(cells[2].text.strip().encode())
+        all_downs.append(cells[3].text.strip().encode())
+        all_types.append(cells[4].text.strip().encode())
+        all_yards.append(cells[5].text.strip().encode())
+        all_details.append(cells[6].text.strip().encode())
+        all_aways.append(cells[7].text.strip().encode())
+        all_homes.append(cells[8].text.strip().encode())
+
+    header_row = [
+        'Time', 'Down', 'Type', 'Yards',
+        'Details', away_team, home_team
+    ]
+    list_of_game_rows = [header_row]
+
+    for t, down, types, yards, details, away, home in zip(
+        all_times, all_downs, all_types, all_yards,
+        all_details, all_aways, all_homes
+    ):
+        new_row = []
+        new_row.append(t)
+        new_row.append(down)
+        new_row.append(types)
+        new_row.append(yards)
+        new_row.append(details)
+        new_row.append(away)
+        new_row.append(home)
+        list_of_game_rows.append(new_row)
+
+    driver.close()
+
+    return list_of_game_rows
+                </pre></code>
+                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or Python. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em>find</em> function is your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>.
+                <br>
+                Note: you can consolidate lines of code that use the above strategy by using XPaths. I strictly use XPaths now after becoming more comfortable with this type of work, and I prefer using the library <em>lxml</em> over <em>BeautifulSoup</em>. I would still recommend <em>BeautifulSoup</em> for beginners though, which is why it is the choice for this tutorial.
+                <br>
+                We grab the away and home teams that are playing the specific game. We identify the table that will contain the rows of our play-by-play. From there, we grab all of the data we care about and store the play-by-play as a list of lists, where each inner list is a row of the play-by-play. Finally, we close the Firefox instance that we opened.
+            </p>
+
+            <p>To view the final version of the file, visit <a href="https://github.com/stevenwu4/CFL/blob/master/Services/pbp_scraper_for_game.py">https://github.com/stevenwu4/CFL/blob/master/Services/pbp_scraper_for_game.py</a>.
+            <br>
+            A couple of notes on differences you'll see:
+            <ul>
+                <li>There's an added input parameter <em>save_to_dest</em>to the function <em>get_game_rows_from_url</em>, which optionally saves the HTML content locally to whatever path value the parameter specifies.
+                <li>There's another function defined, <em>write_to_csv</em>, which will take the list of lists and convert it to a .csv for storage.</li>
+                <li>Using the extremely handy library <em>docopt</em>, the script can be used from the command line. For example, in the /CFL directory, you would type:
+                <code>
+                    PYTHONPATH=. python pbp_scraper_for_game.py --url=http://www.cfl.ca/statistics/statsGame/id/11805 --final_name=blah.csv
+                </code>
+            </li>
+            </ul>
+            </p>
+        </div>
+    <footer>
+            © Steven Wu<a class="float-right" href="http://minimalcss.com">Design by Minimal</a>
+    </footer>
+    </body>
+</html>
