@@ -57,11 +57,11 @@
                 where you can find the definitive guide on installation <a href="http://docs.python-guide.org/en/latest/starting/install/osx/">here</a>. (If you have a different version of Python, or are on a different Operating System, the necessary tweaks to follow this tutorial are minor and can be found through some Google searches.)
                 <br>
                 If this is new territory for you, ignore the section on virtual environments. Once you have <em>pip</em> installed, you can run the following commands to install the required libraries to complete this walkthrough.
-                <code>
-                    pip install BeautifulSoup4<br>
-                    pip install selenium<br>
-                    pip install docopt<br>
-                </code>
+                <code><pre>
+pip install BeautifulSoup4
+pip install selenium
+pip install docopt
+                </pre></code>
                 Before we jump into it, there's two guidelines to be conscious of:
                 <ol>
                     <li>The site's terms and conditions;
@@ -84,26 +84,41 @@
             <p>
                 <h4>Part 1:</h4>
                 <h4>Implementation of the Scraper</h4>
-                We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>. All a web scraper does is open up a URL's content, much like a human would with a browser like Google Chrome or Mozilla Firefox, and proceed to take information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game: "Medlock kicks off", "Burris pass to", "Burris incomplete pass". None of these will have any results found.<br>
-                INSERT SCREENSHOT
+                We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>.
                 <br>
-                That's weird; if we click the <b>Play by Play</b> button, we see it. How can it be there and not be there? Pay attention to the URL; if it changed, we could just follow the redirect to the new URL and scrape that URL's content - but it doesn't change.
+                <img src="../../img/cfl-part1-bs4-selenium/1_playbyplay.png" alt="Image of play-by-play">
+                <br>
+                All a web scraper does is open up a URL's content, much like a human would with a browser like Google Chrome or Mozilla Firefox, and proceed to take information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game:
+                <ul>
+                    <li>"Medlock kicks off"</li>
+                    <li>"Burris pass to"</li>
+                    <li>"Burris incomplete pass"</li>
+                </ul>
+                None of these will have any results found.
+                <br>
+                <img src="../../img/cfl-part1-bs4-selenium/2_0searchresults.png" alt="No results for play-by-play found in source!">
+                <br>
+                That's weird; if we click the <b>Play by Play</b> button, we see it. How can it be there and not be there? Pay attention to the URL; if it changed upon clicking the button, we could just follow the redirect to the new URL and scrape that URL's content - but it doesn't change.
                 <br>
                 To go ahead with one solution to this problem, we're going to be using a package called <em><a href="https://selenium-python.readthedocs.org/getting-started.html">Selenium</a></em>. Selenium allows us to use Python to programatically open up a browser and interact with the different elements of the page. Specifically, it will allow us to click the elusive button that contains the play-by-play HTML we desire.
                 <br>
                 <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
-                <code>
-                    import time<br>
-                    import csv<br>
-                    from bs4 import BeautifulSoup<br>
-                    from selenium import webdriver<br>
-                    <br>
-                    PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'<br>
-                </code>
+                <code><pre>
+import time
+import csv
+from bs4 import BeautifulSoup
+from selenium import webdriver
+PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'
+                </pre></code>
                 The <em>time</em> library is necessary to respect the rules of http://www.cfl.ca/robots.txt. At the time of this writing, all crawlers are allowed but there is a crawl delay of 2. The <em>time</em> library has a function, <em>sleep</em>, which lets us delay our crawls.
                 <br>
-                Finally, the constant <em>PLAYBYPLAY_BTN_XPATH</em> is an <a href="https://developer.mozilla.org/en-US/docs/Web/XPath">XPath</a> to specifically locate the <b>Play by Play</b> button.
-                <br><br>
+                The constant <em>PLAYBYPLAY_BTN_XPATH</em> is an <a href="https://developer.mozilla.org/en-US/docs/Web/XPath">XPath, a language that allows for specifically identifying elements in our HTML document</a>. We use it to locate the <b>Play by Play</b> button. This begs the question of how to derive the XPath. There's two options here:
+                <ol>
+                    <li>Use references (the one I link above is a good start, but any of the top results for Googling XPath work fine too) to learn the language. Like any language, it will take getting used to but once you are comfortable with it you'll never look back.</li>
+                    <li>Use auxiliary tools, like Google Chrome's Dev Tools (which can be activated by right-clicking the page and selecting <em>Inspect Element</em>) right-click option of 'Copy XPath' in the Elements tab (see image below), or popular browser extensions such as <a href="https://chrome.google.com/webstore/detail/xpath-helper/hgimnogjllphhhkhlmebbmlgjoejdpjl?hl=en">XPath Helper</a> that can directly give you a working XPath to use for any element on the page.</li>
+                </ol>
+                <img src="../../img/cfl-part1-bs4-selenium/3_devtools_copyxpath.png" alt="Image of screen when using Chrome's Dev Tools to copy an XPath">
+                <br>
                 Now we can start creating the function.
                 <code><pre>
 def get_game_rows_from_url(url):
@@ -114,7 +129,7 @@ def get_game_rows_from_url(url):
     playbyplay_btn.click()
     soup = BeautifulSoup(driver.page_source)
                 </pre></code>
-                Our function <em>get_game_rows_from_url</em> will receive a <em>url</em> as input. We use the <em>Selenium</em> package's <em>webdriver</em> to open up an instance of Firefox on your computer (note: you need <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox downloaded</a> for this to work!). <em>find_element_by_xpath</em> is a function of the webdriver Firefox instance that returns an element of the HTML based on the XPath you give it (in our case, the XPath to the <b>Play by Play</b> button). This returned element has a function <em>click</em> that clicks our button for us. We load the resulting HTML into <em>BeautifulSoup</em> to focus on the scraping.
+                Our function <em>get_game_rows_from_url</em> will receive a <em>url</em> as input. We use the <em>Selenium</em> package's <em>webdriver</em> to open up an instance of Firefox on your computer (note: you need <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox downloaded</a> for this to work!). <em>find_element_by_xpath</em> is a function of the webdriver Firefox instance that returns an element of the HTML based on the XPath you give it (in our case, the XPath to the <b>Play by Play</b> button that we defined as <em>PLAYBYPLAY_BTN_XPATH</em>). This returned element has a function <em>click</em> that clicks our button for us. We load the resulting HTML into <em>BeautifulSoup</em> to focus on the scraping.
                 <code><pre>
     # Get away/home teams
     away_div = soup.find('div', id='awayteam')
@@ -175,7 +190,9 @@ def get_game_rows_from_url(url):
                 </pre></code>
                 The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or Python. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em>find</em> function is your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>.
                 <br>
+                <br>
                 Note: you can consolidate lines of code that use the above strategy by using XPaths. I strictly use XPaths now after becoming more comfortable with this type of work, and I prefer using the library <em>lxml</em> over <em>BeautifulSoup</em>. I would still recommend <em>BeautifulSoup</em> for beginners though, which is why it is the choice for this tutorial.
+                <br>
                 <br>
                 We grab the away and home teams that are playing the specific game. We identify the table that will contain the rows of our play-by-play. From there, we grab all of the data we care about and store the play-by-play as a list of lists, where each inner list is a row of the play-by-play. Finally, we close the Firefox instance that we opened.
             </p>
