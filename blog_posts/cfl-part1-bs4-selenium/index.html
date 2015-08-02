@@ -66,7 +66,7 @@ pip install docopt
                 <ol>
                     <li>The site's terms and conditions;
                     some sites explicitly disallow scraping of their content.</li>
-                    <li>Every site also a robots.txt file, which contains rules about which crawlers are allowed/disallowed as well as a crawl delay. Always respect the crawl delay!</li>
+                    <li>Every site also has a robots.txt file, which contains rules about which crawlers are allowed/disallowed as well as a crawl delay. Always respect the crawl delay!</li>
                 </ol>
             </p>
             <p>
@@ -102,7 +102,7 @@ pip install docopt
                 <br>
                 To go ahead with one solution to this problem, we're going to be using a package called <em><a href="https://selenium-python.readthedocs.org/getting-started.html">Selenium</a></em>. Selenium allows us to use Python to programatically open up a browser and interact with the different elements of the page. Specifically, it will allow us to click the elusive button that contains the play-by-play HTML we desire.
                 <br>
-                <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
+                <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
                 <code><pre>
 import time
 import csv
