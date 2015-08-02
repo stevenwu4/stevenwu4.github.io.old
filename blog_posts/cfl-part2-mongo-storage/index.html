@@ -1,0 +1,206 @@
+<!doctype html>
+
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Steven Wu</title>
+
+        <meta name="author" content="Steven Wu">
+        <meta name="description" content="Personal website for Steven Wu, with blog posts about data">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../../css/minimal.css">
+
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+          ga('create', 'UA-58456323-1', 'auto');
+          ga('send', 'pageview');
+        </script>
+    </head>
+
+    <body>
+        <div id="banner"></div>
+        <header id="header" role="banner">
+            <h1><a href="../../">Steven Wu</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="../../">About</a></li>
+                    <li><a href="../../blog_posts/">Blog</a></li>
+                    <li><a href="https://github.com/stevenwu4">GitHub</a></li>
+                    <li><a href="https://www.linkedin.com/profile/view?id=165873568">LinkedIn</a></li>
+                    <li><a href="mailto:steven.wu.work@gmail.com?subject=Emailing from your website">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <h2>Data Storage of CFL Play-By-Play Using MongoDB in Python</h2>
+        <h4>Aug 1, 2015</h4>
+
+        <div>
+            <p>
+                In <a href="../cfl-part1-bs4-selenium">Part 1</a>, we achieved the first part of our goal by implementing a scraper that allows us to grab the play-by-play from a given CFL URL.
+                <br>
+                The next step is to build out a system that will use this scraper and collect a season's worth of data. It should be as flexible as possible; e.g: able to handle new teams (for instance, in 2013 the Ottawa Redblacks were not a part of the CFL and from 2014 on they are: it should not take a rewrite to handle this). There are three main tasks we want automated (as they would be extremely annoying and repetitive to do manually for each team for each season):
+                <ol>
+                    <li>Creating the directories to onboard a season</li>
+                    <li>Collecting the schedule pages that contain the links to each team's games' play-by-play and grabbing the right links</li>
+                    <li>Running the scraper on each URL for each team for a season</li>
+                </ol>
+            </p>
+            <p>
+                <h4>Part 2:</h4>
+                <h4>Implementation of the Storage</h4>
+                First thing's first: we'll want directories set up to store our data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. We also want a directory set up to store the play-by-play data; .csv files make the most sense, as our play-by-play data already comes in a fixed-row/fixed-column format.
+                <code><pre>
+import os
+
+TEAMS_2013 = ['BC', 'Edmonton', 'Calgary', 'Hamilton', 'Montreal', 'Toronto', 'Winnipeg', 'Saskatchewan']
+TEAMS_2014 = ['BC', 'Edmonton', 'Calgary', 'Hamilton', 'Montreal', 'Toronto', 'Winnipeg', 'Saskatchewan', 'Ottawa']
+#You will need to configure PATH_TO_DATA yourself
+PATH_TO_DATA = os.path.expanduser('~/Code/CFL/Data')
+
+
+def get_teams_for_given_season(season):
+    assert isinstance(season, str)
+    if season == '2013':
+        teams = TEAMS_2013
+    elif season == '2014':
+        teams = TEAMS_2014
+    else:
+        raise ValueError('ERROR: Season input not in valid range')
+
+    return teams
+
+
+def create_data_dirs(season):
+    """
+    Onetime usage to create team directories for season
+    """
+    list_of_cities = get_teams_for_given_season(season)
+    SAVED_PATH = os.path.join(PATH_TO_DATA, season)
+
+    for city in list_of_cities:
+        path_to_city_dir = os.path.join(SAVED_PATH, city)
+        os.mkdir(path_to_city_dir)
+        path_to_pbp_source_dir = os.path.join(SAVED_PATH, city, 'PlayByPlay')
+        os.mkdir(path_to_pbp_source_dir)
+        path_to_pbp_csvs_dir = os.path.join(SAVED_PATH, city, 'Csvs')
+        os.mkdir(path_to_pbp_csvs_dir)
+                </pre></code>
+                The <em><a href="https://docs.python.org/2/library/os.html">os</a></em> library is an extremely useful standard library that allows us to perform operating system functionality through our program. <em>get_teams_for_given_season</em> is a simple function that gives us a list of teams that correspond to the given season. The function <em>create_data_dirs</em> will take a season, use the <em>get_teams_for_given_season</em> function to get the right teams, and will create the <em>PlayByPlay</em> and <em>Csvs</em> directories for the team on your machine for you.
+                <code><pre>
+import time
+from subprocess import call
+
+
+def get_schedule_pages_map(season):
+    if season not in ('2013', '2014'):
+        raise Exception('No play-by-play before 2013, 2014')
+    # Before 2013, no play by play for games AFAIK
+    BC_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/1'.format(season)
+    CAL_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/2'.format(season)
+    EDM_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/3'.format(season)
+    SAS_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/4'.format(season)
+    WIN_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/5'.format(season)
+    HAM_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/6'.format(season)
+    TOR_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/7'.format(season)
+    # Ottawa's 2013 page doesn't exist
+    OTT_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/65'.format(season)
+    MTL_SCHEDULE_PAGE = 'http://www.cfl.ca/schedule/year/{0}/9'.format(season)
+    SCHEDULE_PAGES_MAP = {
+        'BC': BC_SCHEDULE_PAGE,
+        'Calgary': CAL_SCHEDULE_PAGE,
+        'Edmonton': EDM_SCHEDULE_PAGE,
+        'Saskatchewan': SAS_SCHEDULE_PAGE,
+        'Winnipeg': WIN_SCHEDULE_PAGE,
+        'Hamilton': HAM_SCHEDULE_PAGE,
+        'Toronto': TOR_SCHEDULE_PAGE,
+        'Ottawa': OTT_SCHEDULE_PAGE,
+        'Montreal': MTL_SCHEDULE_PAGE
+    }
+
+    schedule_pages_map = SCHEDULE_PAGES_MAP.copy()
+    if season == '2013':
+        schedule_pages_map.pop('Ottawa', None)
+
+    return schedule_pages_map
+
+
+def collect_schedule_pages_for_teams(season):
+    schedule_pages_map = get_schedule_pages_map(season)
+    SAVED_PATH = os.path.join(PATH_TO_DATA, season)
+
+    for city, url in schedule_pages_map.iteritems():
+        path_to_city_dir = os.path.join(SAVED_PATH, city)
+        name_of_file = os.path.join(path_to_city_dir, 'schedule.html')
+        print 'URL {0}'.format(url)
+        call(['curl', '-o', name_of_file, url])
+        time.sleep(10)
+
+    return True
+                </pre></code>
+                First we define a helper function, <em>get_schedule_pages_map</em>, which will build us a dictionary (key-value pairing). The keys are the teams for the season, and the value is the URL to its schedule page for that season.
+                <br>
+                We use this function when we define <em>collect_schedule_pages_for_teams</em>; all this function does is use the dictionary to grab the schedule page for a team and put the HTML results into the proper directory. Through <em>subprocess</em>'s <em>call</em> function, we use <em><a href="https://en.wikipedia.org/wiki/CURL">cURL</em> to store the source code for the schedule page locally to the right directory.
+
+                <code><pre>
+from bs4 import BeautifulSoup
+from Services.services import get_teams_for_given_season, write_to_csv
+from Services.pbp_scraper_for_game import get_game_rows_from_url
+
+BASE_CFL_URL = 'http://www.cfl.ca'
+
+
+def get_game_urls_from_schedule_page(path_to_schedule_page):
+    game_urls = []
+
+    soup = BeautifulSoup(open(path_to_schedule_page))
+    schedule_table = soup.find('div', class_='sked_tbl')
+    # The first row is a header row, and every 2nd row is just
+    # a line break for the table for visual spacing
+    rows = schedule_table.find_all('tr')[1::2]
+    for row in rows:
+        cells = row.find_all('td')
+        cell_with_url = cells[9]
+        href = cell_with_url.a['href']
+        complete_url = BASE_CFL_URL + href
+        game_urls.append(complete_url)
+
+    return game_urls
+
+
+def collect_pbps_for_teams(season):
+    list_of_cities = get_teams_for_given_season(season)
+    SAVED_PATH = os.path.join(PATH_TO_DATA, season)
+    print 'Beginning play by play collection for {0}'.format(season)
+
+    for city in list_of_cities:
+        print '{0}\n--------'.format(city)
+        path_to_city_dir = os.path.join(SAVED_PATH, city)
+        path_to_schedule_page = os.path.join(path_to_city_dir, 'schedule.html')
+        all_game_urls = get_game_urls_from_schedule_page(path_to_schedule_page)
+        for i, url in enumerate(all_game_urls):
+            # Adjust the counter, I want my games starting at 01 not 00
+            i += 1
+            name = str(i)
+            if len(name) == 1:
+                name = '0'+name
+            path_to_pbp_source = os.path.join(
+                path_to_city_dir, 'PlayByPlay', name+'.html'
+            )
+            path_to_pbp_csv = os.path.join(
+                path_to_city_dir, 'Csvs', name+'.csv'
+            )
+            game_rows = get_game_rows_from_url(url, path_to_pbp_source)
+            write_to_csv(game_rows, path_to_pbp_csv)
+                </pre></code>
+            </p>
+        </div>
+    <footer>
+        © Steven Wu<a class="float-right" href="http://minimalcss.com">Design by Minimal</a>
+    </footer>
+    </body>
+</html>
