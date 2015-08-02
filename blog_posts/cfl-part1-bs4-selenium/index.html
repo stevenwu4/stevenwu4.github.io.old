@@ -188,7 +188,7 @@ def get_game_rows_from_url(url):
 
     return list_of_game_rows
                 </pre></code>
-                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or Python. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em>find</em> function is your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>.
+                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or Python. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em>find</em> and <em>find_all</em> functions are your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>.
                 <br>
                 Note: you can consolidate the lines of code that use the above strategy of recursively using <em>find</em> on elements by using XPaths. I strictly use XPaths now after becoming more comfortable with this type of work.
                 <br>
