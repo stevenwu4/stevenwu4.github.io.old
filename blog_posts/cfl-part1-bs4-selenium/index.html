@@ -86,7 +86,7 @@ pip install docopt
                 <h4>Implementation of the Scraper</h4>
                 We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>.
                 <br>
-                <img src="../../img/cfl-part1-bs4-selenium/1_playbyplay.png" alt="Image of play-by-play">
+                <div class="row"><img class="col-12" src="../../img/cfl-part1-bs4-selenium/1_playbyplay.png" alt="Image of play-by-play"></div>
                 <br>
                 All a web scraper does is open up a URL's content, much like a human would with a browser like Google Chrome or Mozilla Firefox, and proceed to take information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game:
                 <ul>
@@ -96,7 +96,7 @@ pip install docopt
                 </ul>
                 None of these will have any results found.
                 <br>
-                <img src="../../img/cfl-part1-bs4-selenium/2_0searchresults.png" alt="No results for play-by-play found in source!">
+                <div class="row"><img class="col-12" src="../../img/cfl-part1-bs4-selenium/2_0searchresults.png" alt="No results for play-by-play found in source!"></div>
                 <br>
                 That's weird; if we click the <b>Play by Play</b> button, we see the play-by-play data right there. How can it be there on the webpage and yet at the same time not be there? Pay attention to the URL; if it changed upon clicking the button, we could just follow the redirect to the new URL and scrape that URL's content - but it doesn't change.
                 <br>
@@ -117,7 +117,7 @@ PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'
                     <li>Use references (the one I link above is a good start, but any of the top results for Googling XPath work fine too) to learn the language. Like any language, it will take getting used to but once you are comfortable with it you'll never look back.</li>
                     <li>Use auxiliary tools, like Google Chrome's Dev Tools (which can be activated by right-clicking the page and selecting <em>Inspect Element</em>) right-click option of 'Copy XPath' in the Elements tab (see image below), or popular browser extensions such as <a href="https://chrome.google.com/webstore/detail/xpath-helper/hgimnogjllphhhkhlmebbmlgjoejdpjl?hl=en">XPath Helper</a> that can directly give you a working XPath to use for any element on the page.</li>
                 </ol>
-                <img src="../../img/cfl-part1-bs4-selenium/3_devtools_copyxpath.png" alt="Image of screen when using Chrome's Dev Tools to copy an XPath">
+                <div class="row"><img class="col-12" src="../../img/cfl-part1-bs4-selenium/3_devtools_copyxpath.png" alt="Image of screen when using Chrome's Dev Tools to copy an XPath"></div>
                 <br>
                 Now we can start creating the function.
                 <code><pre>
