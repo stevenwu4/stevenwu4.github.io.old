@@ -36,25 +36,26 @@
             </nav>
         </header>
 
-        <h2>Data Storage of CFL Play-By-Play Using MongoDB in Python</h2>
+        <h2>Workflow of Storing CFL Play-By-Play Data Using Python</h2>
         <h4>Aug 1, 2015</h4>
 
         <div>
             <p>
                 In <a href="../cfl-part1-bs4-selenium">Part 1</a>, we achieved the first part of our goal by implementing a scraper that allows us to grab the play-by-play from a given CFL URL.
                 <br>
-                The next step is to build out a system that will use this scraper and collect a season's worth of data. It should be as flexible as possible; e.g: able to handle new teams (for instance, in 2013 the Ottawa Redblacks were not a part of the CFL and from 2014 on they are: it should not take a rewrite to handle this). There are three main tasks we want automated (as they would be extremely annoying and repetitive to do manually for each team for each season):
+                The next step is to build out a workflow that will use this scraper, collect a given season's worth of data, and save it to a database. It should be as flexible; e.g: able to handle new teams (for instance, in 2013 the Ottawa Redblacks were not a part of the CFL and from 2014 on they are: it should not take a rewrite to handle this). There are four main tasks we want automated (as they would be extremely annoying and repetitive to do manually for each team for each season):
                 <ol>
                     <li>Creating the directories to onboard a season</li>
                     <li>Collecting the schedule pages that contain the links to each team's games' play-by-play and grabbing the right links</li>
-                    <li>Running the scraper on each URL for each team for a season</li>
+                    <li>Running the scraper on each URL for each team for a season and saving the play-by-play in a .csv</li>
                 </ol>
             </p>
             <p>
                 <h4>Part 2:</h4>
-                <h4>Implementation of the Storage</h4>
-                First thing's first: we'll want directories set up to store our data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. We also want a directory set up to store the play-by-play data; .csv files make the most sense, as our play-by-play data already comes in a fixed-row/fixed-column format.
-                <code><pre>
+                <h4>Implementation of the Storage Workflow</h4>
+                First thing's first: we'll want directories set up to store our source data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. We also want a directory set up to store the play-by-play data we parse; .csv files make the most sense, as our play-by-play data already comes in a fixed-row/fixed-column format.
+                <div class="row">
+                    <code class="col-8"><pre>
 import os
 
 TEAMS_2013 = ['BC', 'Edmonton', 'Calgary', 'Hamilton', 'Montreal', 'Toronto', 'Winnipeg', 'Saskatchewan']
@@ -89,9 +90,12 @@ def create_data_dirs(season):
         os.mkdir(path_to_pbp_source_dir)
         path_to_pbp_csvs_dir = os.path.join(SAVED_PATH, city, 'Csvs')
         os.mkdir(path_to_pbp_csvs_dir)
-                </pre></code>
+                    </pre></code>
+                </div>
                 The <em><a href="https://docs.python.org/2/library/os.html">os</a></em> library is an extremely useful standard library that allows us to perform operating system functionality through our program. <em>get_teams_for_given_season</em> is a simple function that gives us a list of teams that correspond to the given season. The function <em>create_data_dirs</em> will take a season, use the <em>get_teams_for_given_season</em> function to get the right teams, and will create the <em>PlayByPlay</em> and <em>Csvs</em> directories for the team on your machine for you.
-                <code><pre>
+
+                <div class="row">
+                    <code class="col-8"><pre>
 import time
 from subprocess import call
 
@@ -141,12 +145,24 @@ def collect_schedule_pages_for_teams(season):
         time.sleep(10)
 
     return True
-                </pre></code>
-                First we define a helper function, <em>get_schedule_pages_map</em>, which will build us a dictionary (key-value pairing). The keys are the teams for the season, and the value is the URL to its schedule page for that season.
+                    </pre></code>
+                </div>
+                First we define a helper function, <em>get_schedule_pages_map</em>, which will build us a dictionary (key-value pairing). The keys are the teams for the season, and the value is the URL to its schedule page for that season. To figure out the format of the site's URLs takes nothing more than a few clicks; observe below that the format breaks down to <em>www.cfl.ca/schedule/year/SEASON/TEAM_ID</em>:
+                <div class="row">
+                    <img class="col-12" src="../../img/cfl-part2-workflow-storage/1_scheduleurl.png" alt="Image of schedule URL">
+                </div>
+                If we figure out each team's TEAM_ID (by simply clicking each team's schedule page and seeing what it's exposed as in the URL), then we're set.
                 <br>
-                We use this function when we define <em>collect_schedule_pages_for_teams</em>; all this function does is use the dictionary to grab the schedule page for a team and put the HTML results into the proper directory. Through <em>subprocess</em>'s <em>call</em> function, we use <em><a href="https://en.wikipedia.org/wiki/CURL">cURL</em> to store the source code for the schedule page locally to the right directory.
+                We use this function when we define <em>collect_schedule_pages_for_teams</em>; all this function does is use the dictionary to grab the schedule page for a team and put the HTML results into the proper directory. Through <em>subprocess</em>'s <em>call</em> function, we use <em><a href="https://en.wikipedia.org/wiki/CURL">cURL</a></em> to store the source code for the schedule page locally to the right directory.
 
-                <code><pre>
+                Now that we have the schedule pages for each team stored where we want them, let's take a closer look at a specific example. Below is a screenshot of Ottawa's 2015 schedule page. On the CFL webpage, for every season since 2013, each team has a schedule page which contains all of the links to the games the team participated in. I've highlighted the important parts required to proceed.
+
+                <div class="row">
+                    <img class="col-12" src="../../img/cfl-part2-workflow-storage/2_schedulepage.png" alt="Image of schedule page">
+                </div>
+                <br>
+                <div class="row">
+                    <code><pre>
 from bs4 import BeautifulSoup
 from Services.services import get_teams_for_given_season, write_to_csv
 from Services.pbp_scraper_for_game import get_game_rows_from_url
@@ -194,9 +210,22 @@ def collect_pbps_for_teams(season):
             path_to_pbp_csv = os.path.join(
                 path_to_city_dir, 'Csvs', name+'.csv'
             )
-            game_rows = get_game_rows_from_url(url, path_to_pbp_source)
+            game_rows = get_game_rows_from_url(
+                url, save_to_dest=path_to_pbp_source
+            )
             write_to_csv(game_rows, path_to_pbp_csv)
-                </pre></code>
+                    </pre></code>
+                </div>
+                <em>get_game_urls_from_schedule_page</em> will take a path to a CFL schedule page, open it and (using our new knowledge of <em>BeautifulSoup</em>) extract from it the URLs to each game's play-by-play. From the screenshot, we can see that the information we want from the schedule is in a <em>div</em> with class <em>sked_tbl</em>. The <em>[1::2]</em> syntax is a neat trick with Python lists that lets us take every 2nd element from the list, starting from the 1st index.
+                <br>
+                In <em>collect_pbps_for_teams</em>, for every team in the season, we simply supply the path for the team's schedule page into the above function, get the returned list of game URLs, and supply each URL to our scraper. There is some slight string manipulation to make sure our games enumerate in a manner I just happen to prefer.
+                <br>
+                <br>
+                At this point, we've completed 90% of our file that will take care of our workflow for us. To finish off the remaining 10%, we'll go over how to add a nice command line interface.
+            </p>
+
+            <p>
+                storage of our data using a NoSQL database called <a href="https://www.mongodb.org/">MongoDB
             </p>
         </div>
     <footer>
