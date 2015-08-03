@@ -44,7 +44,7 @@
             <p>
                 In <a href="../cfl-part1-bs4-selenium">Part 1</a>, we achieved the first part of our goal by implementing a scraper that allows us to grab the play-by-play from a given CFL URL.
                 <br>
-                The next step is to build out a workflow that will use this scraper, collect a given season's worth of data, and save it to a database. It should be as flexible; e.g: able to handle new teams (for instance, in 2013 the Ottawa Redblacks were not a part of the CFL and from 2014 on they are: it should not take a rewrite to handle this). There are three main tasks we want automated (as they would be extremely annoying and repetitive to do manually for each team for each season):
+                The next step is to build out a workflow that will use this scraper, collect a given season's worth of data, and save it to a database. It should be flexible in terms of using the same code across seasons (for instance, in 2013 the Ottawa Redblacks were not a part of the CFL and from 2014 on they are: it should not take a rewrite to handle this). There are three main tasks we want automated (as they would be extremely annoying and repetitive to do manually for each team for each season):
                 <ol>
                     <li>Creating the directories to onboard a season</li>
                     <li>Collecting the schedule pages that contain the links to each team's games' play-by-play and grabbing the right links</li>
@@ -54,7 +54,7 @@
             <p>
                 <h4>Part 2:</h4>
                 <h4>Implementation of the Scraping and Storage Workflow</h4>
-                First thing's first: we'll want directories set up - we need a space to store our source data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. We also want a directory set up to store the play-by-play data we parse; .csv files make the most sense, as our play-by-play data already comes in a fixed-row/fixed-column format.
+                First thing's first: we'll want directories set up - we need a space to store our source data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. It wouldn't be unheard of for the play-by-play to retroactively change or disappear - this way, any results we derive will have the source from which they came from to back it up. We also want a directory set up to store the play-by-play data we parse; .csv files make the most sense here, as our play-by-play data already comes in a fixed-row/fixed-column format.
                 <div class="row">
                     <code class="col-8"><pre>
 import os
@@ -112,7 +112,7 @@ def create_data_dirs(season):
         os.mkdir(path_to_pbp_csvs_dir)
                     </pre></code>
                 </div>
-                The <em><a href="https://docs.python.org/2/library/os.html">os</a></em> library is an extremely useful standard library that allows us to perform operating system functionality through our program. <em>get_teams_for_given_season</em> is a simple function that gives us a list of teams that correspond to the given season. The function <em>create_data_dirs</em> will take a season, use the <em>get_teams_for_given_season</em> function to get the right teams, and will create the <em>PlayByPlay</em> and <em>Csvs</em> directories for the team on your machine for you.
+                The <em><a href="https://docs.python.org/2/library/os.html">os</a></em> library is an extremely useful standard library that allows us to perform operating system functionality, like manipulating directories, through our program. <em>get_teams_for_given_season</em> is a simple function that gives us a list of teams that correspond to the given season. The function <em>create_data_dirs</em> will take a season, use the <em>get_teams_for_given_season</em> function to get the right teams, and will create the <em>PlayByPlay</em> and <em>Csvs</em> directories for the team on your machine for you.
 
                 <div class="row">
                     <code class="col-8"><pre>
@@ -169,7 +169,7 @@ def collect_schedule_pages_for_teams(season):
     return True
                     </pre></code>
                 </div>
-                First we define a helper function, <em>get_schedule_pages_map</em>, which will build us a dictionary (key-value pairing). The keys are the teams for the season, and the value is the URL to its schedule page for that season. To figure out the format of the site's URLs takes nothing more than a few clicks; observe below that the format breaks down to <em>www.cfl.ca/schedule/year/SEASON/TEAM_ID</em>:
+                Now that we have our folders setup, we can start filling them up with data. Worrying about grabbing the play-by-play right now would be trying to run before we walk; a smarter approach is to try and see if we can get the schedule page for each team and get the links to each game that way. First we define a helper function, <em>get_schedule_pages_map</em>, which will build us a dictionary (key-value pairing). The keys are the teams for the season, and the value is the URL to its schedule page for that season. To figure out the format of the site's URLs takes nothing more than a few clicks; observe below that the format breaks down to <em>www.cfl.ca/schedule/year/SEASON/TEAM_ID</em>:
                 <div class="row">
                     <img class="col-10" src="../../img/cfl-part2-workflow-storage/1_scheduleurl.png" alt="Image of schedule URL">
                 </div>
@@ -236,7 +236,7 @@ def collect_pbps_for_teams(season):
             write_to_csv(game_rows, path_to_pbp_csv)
                     </pre></code>
                 </div>
-                <em>get_game_urls_from_schedule_page</em> will take a path to a CFL schedule page, open it and (using our new knowledge of <em>BeautifulSoup</em>) extract from it the URLs to each game's play-by-play. From the screenshot, we can see that the information we want from the schedule is in a <em>div</em> with class <em>sked_tbl</em>. The <em>[1::2]</em> syntax is a neat trick with Python lists that lets us take every 2nd element from the list, starting from the 1st index.
+                <em>get_game_urls_from_schedule_page</em> will take a path to a CFL schedule page, open it and (using our newly acquired knowledge of how to use <em>BeautifulSoup</em>) extract the URLs to each game's play-by-play from it. From the screenshot, we can see that the information we want from the schedule is in a <em>div</em> with class <em>sked_tbl</em>. The <em>[1::2]</em> syntax is a neat trick with Python lists that lets us take every 2nd element from the list, starting from the 1st index.
                 <br>
                 In <em>collect_pbps_for_teams</em>, for every team in the season, we simply supply the path for the team's schedule page into the above function, get the returned list of game URLs, and supply each URL to our scraper. There is some slight string manipulation to make sure our games enumerate in a manner I just happen to prefer.
                 <br>
@@ -268,9 +268,11 @@ Usage:
 """
                     </pre></code>
                 </div>
-                The """ denote block comments in Python. Comments are ignored when programs are executed, <em>docopt</em> will take these commented instructions and understand them, thanks to its parser. What's *necessary* here is everything from Usage: on down - this is what defines exactly what's allowed and what's not allowed when calling <em>crawl_schedule_pages.py</em>. The parantheses around an argument, such as (--season=&lt;sn&gt;), mean that it's <b>mandatory</b>. The =&lt;sn&gt; tells the <em>docopt</em> parser that we expect a value supplied this argument. The pipe, |, in the second argument (--mkdirs|--get_schedules|--get_pbps) means an exclusive "or". In other words, we want the user to specify one of --mkdirs, --get_schedules, or --get_pbps. Notice how there is no =&lt;value&gt; here; these will just be indicator flags to let us know which function to run.
+                """ denotes block comments in Python. Comments are ignored when programs are executed, but <em>docopt</em> will take these commented instructions and understand them, thanks to its parser.
                 <br>
-                The text above Usage: is purely for the user to see on how to run it. They'll see this message whenever they run this file with --h supplied:
+                What's *necessary* here is everything from <b>Usage:</b> on down - this is what defines exactly what's allowed and what's not allowed when calling <em>crawl_schedule_pages.py</em>. The parantheses around an argument, such as (--season=&lt;sn&gt;), mean that it's <b>mandatory</b>. The =&lt;sn&gt; tells the <em>docopt</em> parser that we expect a value supplied this argument. The pipe, |, in the second argument (--mkdirs|--get_schedules|--get_pbps) means an exclusive "or". In other words, we want the user to specify one of --mkdirs, --get_schedules, or --get_pbps. Notice how there is no =&lt;value&gt; here; these will just be indicator flags to let us know which function to run.
+                <br>
+                The text above </b>Usage:</b> is purely for the user to see on how to run it. This isn't necessary, but it's helpful as both a reminder to yourself when you haven't touched this code in awhile and to others who may be looking at it and/or using it. Users will see this message whenever they run this file with --h supplied:
                 <div class="row">
                     <img class="col-10" src="../../img/cfl-part2-workflow-storage/3_docopthelp.png" alt="Image of docopt help">
                 </div>
@@ -293,7 +295,7 @@ if __name__ == '__main__':
         collect_pbps_for_teams(season)
                     </pre></code>
                 </div>
-                The first line basically says: "only run the code below if this script is being called from the command line". Why? Because I might write another Python program later on that imports one of these functions, and I want to separate what this file does when it's run from the command line versus when it's imported. The line below is where <em>docopt</em>'s magic happens: the user's supplied arguments are easily accessible in the <em>args</em> dictionary.
+                The first line basically says: "only run the code below if this script is being called from the command line". Why? Because I might write another Python program later on that imports one of these functions, and I want to separate what this file does when it's run from the command line versus when it's imported. The line below that is where <em>docopt</em>'s magic happens: the user's supplied arguments are easily accessible in the <em>args</em> dictionary. The rest comes down to simple conditionals based on what the user's arguments were that allow us to perform the exact function the user intended on calling.
             </p>
 
             <p>
