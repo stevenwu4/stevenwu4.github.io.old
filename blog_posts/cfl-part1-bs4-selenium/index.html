@@ -50,12 +50,13 @@
             <p>
                 The aim of this tutorial is to be the tutorial I wish I had stumbled upon when choosing my topic for my aforementioned research project. There are plenty of web scraping 101 tutorials out there: this will one with an application to sports, with particular attention given to the data processing and analysis tasks that are necessary afterwards.
 
-                The developer environment going forward with this tutorial will be:
+                The environment going forward with this tutorial will be:
                 <ul>
                     <li>Python 2.7.5</li>
                     <li>Mac OS X</li>
+                    <li>Google Chrome</li>
                 </ul>
-                where you can find <a href="http://docs.python-guide.org/en/latest/starting/install/osx/">the definitive guide on proper installation here</a>. (If you have a different version of Python, or are on a different Operating System, the necessary tweaks to follow this tutorial are minor and can be found through some Google searches.)
+                where you can find <a href="http://docs.python-guide.org/en/latest/starting/install/osx/">the definitive guide on proper installation of Python here</a>. (If you have a different version of Python, or are on a different Operating System, the necessary tweaks to follow this tutorial are minor and can be found through some Google searches.)
                 <br>
                 If this is new territory for you, ignore the section on virtual environments. Once you have <em>pip</em> installed, you can run the following commands to install the required libraries to complete this walkthrough.
                 <div class="row">
@@ -93,7 +94,7 @@ pip install docopt
                     <img class="col-10" src="../../img/cfl-part1-bs4-selenium/1_playbyplay.png" alt="Image of play-by-play">
                 </div>
                 <br>
-                All a web scraper does is open up a URL's content, much like a human would with a browser like Google Chrome or Mozilla Firefox, and proceed to take information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game:
+                All a web scraper does is open up a URL's content - much like a human would with a browser like Google Chrome or Mozilla Firefox - and proceed to extract information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game:
                 <ul>
                     <li>"Medlock kicks off"</li>
                     <li>"Burris pass to"</li>
@@ -119,12 +120,12 @@ from selenium import webdriver
 PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'
                     </pre></code>
                 </div>
-                The <em>time</em> library is necessary to respect the rules of http://www.cfl.ca/robots.txt. At the time of this writing, all crawlers are allowed but there is a crawl delay of 2. The <em>time</em> library has a function, <em>sleep</em>, which lets us delay our crawls.
+                The <em>time</em> library is necessary to respect the rules of <a href="http://www.cfl.ca/robots.txt">http://www.cfl.ca/robots.txt</a>. At the time of this writing, all crawlers are allowed but there is a crawl delay of 2. The <em>time</em> library has a function, <em>sleep</em>, which lets us delay our crawls.
                 <br>
                 The constant <em>PLAYBYPLAY_BTN_XPATH</em> is an <a href="https://developer.mozilla.org/en-US/docs/Web/XPath">XPath, a language that allows for specifically identifying elements in our HTML document</a>. We use it to locate the <b>Play by Play</b> button. This begs the question of how to derive the XPath. There's two options here:
                 <ol>
-                    <li>Use references (the one I link above is a good start, but any of the top results for Googling XPath work fine too) to learn the language. Like any language, it will take getting used to but once you are comfortable with it you'll never look back.</li>
-                    <li>Use auxiliary tools, like Google Chrome's Dev Tools (which can be activated by right-clicking the page and selecting <em>Inspect Element</em>) right-click option of 'Copy XPath' in the Elements tab (see image below), or popular browser extensions such as <a href="https://chrome.google.com/webstore/detail/xpath-helper/hgimnogjllphhhkhlmebbmlgjoejdpjl?hl=en">XPath Helper</a> that can directly give you a working XPath to use for any element on the page.</li>
+                    <li>Use references (the link above is a good start, but any of the top results for Googling XPath work fine too) to learn the language. Like any language, it will take getting used to but once you are comfortable with it you'll never look back.</li>
+                    <li>Use auxiliary tools, like Google Chrome's Dev Tools (which can be activated by right-clicking the page and selecting <em>Inspect Element</em>) which allows you a right-click option of 'Copy XPath' in the Elements tab (see image below), or popular browser extensions such as <a href="https://chrome.google.com/webstore/detail/xpath-helper/hgimnogjllphhhkhlmebbmlgjoejdpjl?hl=en">XPath Helper</a> that can directly give you a working XPath to use for any element on the page.</li>
                 </ol>
                 <div class="row">
                     <img class="col-10" src="../../img/cfl-part1-bs4-selenium/3_devtools_copyxpath.png" alt="Image of screen when using Chrome's Dev Tools to copy an XPath">
@@ -203,9 +204,12 @@ def get_game_rows_from_url(url):
     return list_of_game_rows
                     </pre></code>
                 </div>
-                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or Python. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em>find</em> and <em>find_all</em> functions are your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>.
+                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or new to Python itself. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find">find</a></em> and <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find-all">find_all</a></em> functions are your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, let's look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>. Below is a screenshot that shows how we arrive at getting the rows.
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part1-bs4-selenium/4_pbphtmlstructure.png" alt="Image of HTML of play-by-play">
+                </div>
                 <br>
-                Note: you can consolidate the lines of code that use the above strategy of recursively using <em>find</em> on elements by using XPaths. I strictly use XPaths now after becoming more comfortable with this type of work.
+                Note: you can consolidate the lines of code that use the above strategy of recursively using <em>find</em> on elements by using XPaths. I strictly use XPaths now after becoming more comfortable with this type of work. Examplem XPaths that would return an equivalent list to <em>rows</em>are '//div[@id="stat-game-pbp"]/div[@id="stat-game-cat"]/table[@id="pbp-table"]//tr' or the simpler '//table[@id="pbp-table"]//tr'
                 <br>
                 We grab the away and home teams that are playing the specific game. We identify the table that will contain the rows of our play-by-play. From there, we grab all of the data we care about and store the play-by-play as a list of lists, where each inner list is a row of the play-by-play. Finally, we close the Firefox instance that we opened.
             </p>
