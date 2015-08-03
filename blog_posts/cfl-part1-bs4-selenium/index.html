@@ -57,16 +57,18 @@
                 where you can find <a href="http://docs.python-guide.org/en/latest/starting/install/osx/">the definitive guide on proper installation here</a>. (If you have a different version of Python, or are on a different Operating System, the necessary tweaks to follow this tutorial are minor and can be found through some Google searches.)
                 <br>
                 If this is new territory for you, ignore the section on virtual environments. Once you have <em>pip</em> installed, you can run the following commands to install the required libraries to complete this walkthrough.
-                <code><pre>
+                <div class="row">
+                    <code class="col-8"><pre>
 pip install BeautifulSoup4
 pip install selenium
 pip install docopt
-                </pre></code>
+                    </pre></code>
+                </div>
                 Before we jump into it, there's two guidelines to be conscious of:
                 <ol>
                     <li>The site's terms and conditions;
                     some sites explicitly disallow scraping of their content.</li>
-                    <li>Every site also a robots.txt file, which contains rules about which crawlers are allowed/disallowed as well as a crawl delay. Always respect the crawl delay!</li>
+                    <li>Every site also has a robots.txt file, which contains rules about which crawlers are allowed/disallowed as well as a crawl delay. Always respect the crawl delay!</li>
                 </ol>
             </p>
             <p>
@@ -86,7 +88,9 @@ pip install docopt
                 <h4>Implementation of the Scraper</h4>
                 We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>.
                 <br>
-                <img src="../../img/cfl-part1-bs4-selenium/1_playbyplay.png" alt="Image of play-by-play">
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part1-bs4-selenium/1_playbyplay.png" alt="Image of play-by-play">
+                </div>
                 <br>
                 All a web scraper does is open up a URL's content, much like a human would with a browser like Google Chrome or Mozilla Firefox, and proceed to take information from the source content. On the web page, right click and click 'View Source'. Here, we run into our first roadblock: the play-by-play doesn't appear to be in the source! Try CMD + F for the first few plays in the game:
                 <ul>
@@ -96,20 +100,24 @@ pip install docopt
                 </ul>
                 None of these will have any results found.
                 <br>
-                <img src="../../img/cfl-part1-bs4-selenium/2_0searchresults.png" alt="No results for play-by-play found in source!">
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part1-bs4-selenium/2_0searchresults.png" alt="No results for play-by-play found in source!">
+                </div>
                 <br>
                 That's weird; if we click the <b>Play by Play</b> button, we see the play-by-play data right there. How can it be there on the webpage and yet at the same time not be there? Pay attention to the URL; if it changed upon clicking the button, we could just follow the redirect to the new URL and scrape that URL's content - but it doesn't change.
                 <br>
                 To go ahead with one solution to this problem, we're going to be using a package called <em><a href="https://selenium-python.readthedocs.org/getting-started.html">Selenium</a></em>. Selenium allows us to use Python to programatically open up a browser and interact with the different elements of the page. Specifically, it will allow us to click the elusive button that contains the play-by-play HTML we desire.
                 <br>
-                <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
-                <code><pre>
+                <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
+                <div class="row">
+                    <code class="col-8"><pre>
 import time
 import csv
 from bs4 import BeautifulSoup
 from selenium import webdriver
 PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'
-                </pre></code>
+                    </pre></code>
+                </div>
                 The <em>time</em> library is necessary to respect the rules of http://www.cfl.ca/robots.txt. At the time of this writing, all crawlers are allowed but there is a crawl delay of 2. The <em>time</em> library has a function, <em>sleep</em>, which lets us delay our crawls.
                 <br>
                 The constant <em>PLAYBYPLAY_BTN_XPATH</em> is an <a href="https://developer.mozilla.org/en-US/docs/Web/XPath">XPath, a language that allows for specifically identifying elements in our HTML document</a>. We use it to locate the <b>Play by Play</b> button. This begs the question of how to derive the XPath. There's two options here:
@@ -117,10 +125,13 @@ PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'
                     <li>Use references (the one I link above is a good start, but any of the top results for Googling XPath work fine too) to learn the language. Like any language, it will take getting used to but once you are comfortable with it you'll never look back.</li>
                     <li>Use auxiliary tools, like Google Chrome's Dev Tools (which can be activated by right-clicking the page and selecting <em>Inspect Element</em>) right-click option of 'Copy XPath' in the Elements tab (see image below), or popular browser extensions such as <a href="https://chrome.google.com/webstore/detail/xpath-helper/hgimnogjllphhhkhlmebbmlgjoejdpjl?hl=en">XPath Helper</a> that can directly give you a working XPath to use for any element on the page.</li>
                 </ol>
-                <img src="../../img/cfl-part1-bs4-selenium/3_devtools_copyxpath.png" alt="Image of screen when using Chrome's Dev Tools to copy an XPath">
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part1-bs4-selenium/3_devtools_copyxpath.png" alt="Image of screen when using Chrome's Dev Tools to copy an XPath">
+                </div>
                 <br>
                 Now we can start creating the function.
-                <code><pre>
+                <div class="row">
+                    <code class="col-8"><pre>
 def get_game_rows_from_url(url):
     driver = webdriver.Firefox()
     driver.get(url)
@@ -128,9 +139,11 @@ def get_game_rows_from_url(url):
     playbyplay_btn = driver.find_element_by_xpath(PLAYBYPLAY_BTN_XPATH)
     playbyplay_btn.click()
     soup = BeautifulSoup(driver.page_source)
-                </pre></code>
+                    </pre></code>
+                </div>
                 Our function <em>get_game_rows_from_url</em> will receive a <em>url</em> as input. We use the <em>Selenium</em> package's <em>webdriver</em> to open up an instance of Firefox on your computer (note: you need <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox downloaded</a> for this to work!). <em>find_element_by_xpath</em> is a function of the webdriver Firefox instance that returns an element of the HTML based on the XPath you give it (in our case, the XPath to the <b>Play by Play</b> button that we defined as <em>PLAYBYPLAY_BTN_XPATH</em>). This returned element has a function <em>click</em> that clicks our button for us. We load the resulting HTML into <em>BeautifulSoup</em> to focus on the scraping.
-                <code><pre>
+                <div class="row">
+                    <code class="col-8"><pre>
     # Get away/home teams
     away_div = soup.find('div', id='awayteam')
     away_team = away_div.find('h3', class_='cityname').text
@@ -187,8 +200,9 @@ def get_game_rows_from_url(url):
     driver.close()
 
     return list_of_game_rows
-                </pre></code>
-                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or Python. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em>find</em> function is your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>.
+                    </pre></code>
+                </div>
+                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or Python. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em>find</em> and <em>find_all</em> functions are your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>.
                 <br>
                 Note: you can consolidate the lines of code that use the above strategy of recursively using <em>find</em> on elements by using XPaths. I strictly use XPaths now after becoming more comfortable with this type of work.
                 <br>
@@ -202,16 +216,18 @@ def get_game_rows_from_url(url):
                 <li>There's an added input parameter <em>save_to_dest</em> to the function <em>get_game_rows_from_url</em>, which optionally saves the HTML content locally to whatever path value the parameter specifies.
                 <li>There's a function imported, <em>write_to_csv</em>, which will take the list of lists and convert it to a .csv for storage.</li>
                 <li>Using the extremely handy library <em>docopt</em>, the script can be used from the command line. For example, in the /CFL directory, you would type:
-                <code>
+                <div class="row">
+                    <code class="col-8">
                     PYTHONPATH=. python pbp_scraper_for_game.py --url=http://www.cfl.ca/statistics/statsGame/id/12833 --final_name=blah.csv
-                </code>
+                    </code>
+                </div>
             </li>
             </ul>
             </p>
             <p>
-                Now that we're done implementing our scraper, we need to use it to grab the data. Now, we *could* just manually take every URL for a season, and call this script from the command line to have the play-by-play we want. However, it's good practice to automate as much as possible in our workflow. In the next part of this series, I will go over how to flesh out a basic system that will take care of the storage of our data using a NoSQL database called <a href="https://www.mongodb.org/">MongoDB</a>.
+                Now that we're done implementing our scraper, we need to use it to grab the data. Now, we *could* just manually take every URL for a season, and call this script from the command line to have the play-by-play we want. However, it's good practice to automate as much as possible in our workflow. In the next part of this series, I will go over how to flesh out a basic system that will take care of a workflow that will use this scraper to collect the data and store it locally onto your machine</a>.
 
-                <a href="../cfl-part2-mongo-storage">Click here for Part 2 in this series</a>
+                <a href="../cfl-part2-workflow-storage">Click here for Part 2 in this series</a>
             </p>
         </div>
     <footer>

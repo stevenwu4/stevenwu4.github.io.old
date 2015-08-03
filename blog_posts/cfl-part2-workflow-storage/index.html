@@ -1,0 +1,306 @@
+<!doctype html>
+
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Steven Wu</title>
+
+        <meta name="author" content="Steven Wu">
+        <meta name="description" content="Personal website for Steven Wu, with blog posts about data">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../../css/minimal.css">
+
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+          ga('create', 'UA-58456323-1', 'auto');
+          ga('send', 'pageview');
+        </script>
+    </head>
+
+    <body>
+        <div id="banner"></div>
+        <header id="header" role="banner">
+            <h1><a href="../../">Steven Wu</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="../../">About</a></li>
+                    <li><a href="../../blog_posts/">Blog</a></li>
+                    <li><a href="https://github.com/stevenwu4">GitHub</a></li>
+                    <li><a href="https://www.linkedin.com/profile/view?id=165873568">LinkedIn</a></li>
+                    <li><a href="mailto:steven.wu.work@gmail.com?subject=Emailing from your website">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <h2>Workflow of Storing CFL Play-By-Play Data Using Docopt in Python</h2>
+        <h4>Aug 1, 2015</h4>
+
+        <div>
+            <p>
+                In <a href="../cfl-part1-bs4-selenium">Part 1</a>, we achieved the first part of our goal by implementing a scraper that allows us to grab the play-by-play from a given CFL URL.
+                <br>
+                The next step is to build out a workflow that will use this scraper, collect a given season's worth of data, and save it to a database. It should be as flexible; e.g: able to handle new teams (for instance, in 2013 the Ottawa Redblacks were not a part of the CFL and from 2014 on they are: it should not take a rewrite to handle this). There are three main tasks we want automated (as they would be extremely annoying and repetitive to do manually for each team for each season):
+                <ol>
+                    <li>Creating the directories to onboard a season</li>
+                    <li>Collecting the schedule pages that contain the links to each team's games' play-by-play and grabbing the right links</li>
+                    <li>Running the scraper on each URL for each team for a season and saving the play-by-play in a .csv</li>
+                </ol>
+            </p>
+            <p>
+                <h4>Part 2:</h4>
+                <h4>Implementation of the Scraping and Storage Workflow</h4>
+                First thing's first: we'll want directories set up - we need a space to store our source data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. We also want a directory set up to store the play-by-play data we parse; .csv files make the most sense, as our play-by-play data already comes in a fixed-row/fixed-column format.
+                <div class="row">
+                    <code class="col-8"><pre>
+import os
+
+TEAMS_2013 = [
+    'BC',
+    'Edmonton',
+    'Calgary',
+    'Hamilton',
+    'Montreal',
+    'Toronto',
+    'Winnipeg',
+    'Saskatchewan',
+]
+TEAMS_2014 = [
+    'BC',
+    'Edmonton',
+    'Calgary',
+    'Hamilton',
+    'Montreal',
+    'Toronto',
+    'Winnipeg',
+    'Saskatchewan',
+    'Ottawa',
+]
+#You will need to configure PATH_TO_DATA yourself
+PATH_TO_DATA = os.path.expanduser('~/Code/CFL/Data')
+
+
+def get_teams_for_given_season(season):
+    assert isinstance(season, str)
+    if season == '2013':
+        teams = TEAMS_2013
+    elif season == '2014':
+        teams = TEAMS_2014
+    else:
+        raise ValueError('ERROR: Season input not in valid range')
+
+    return teams
+
+
+def create_data_dirs(season):
+    """
+    Onetime usage to create team directories for season
+    """
+    list_of_cities = get_teams_for_given_season(season)
+    SAVED_PATH = os.path.join(PATH_TO_DATA, season)
+
+    for city in list_of_cities:
+        path_to_city_dir = os.path.join(SAVED_PATH, city)
+        os.mkdir(path_to_city_dir)
+        path_to_pbp_source_dir = os.path.join(SAVED_PATH, city, 'PlayByPlay')
+        os.mkdir(path_to_pbp_source_dir)
+        path_to_pbp_csvs_dir = os.path.join(SAVED_PATH, city, 'Csvs')
+        os.mkdir(path_to_pbp_csvs_dir)
+                    </pre></code>
+                </div>
+                The <em><a href="https://docs.python.org/2/library/os.html">os</a></em> library is an extremely useful standard library that allows us to perform operating system functionality through our program. <em>get_teams_for_given_season</em> is a simple function that gives us a list of teams that correspond to the given season. The function <em>create_data_dirs</em> will take a season, use the <em>get_teams_for_given_season</em> function to get the right teams, and will create the <em>PlayByPlay</em> and <em>Csvs</em> directories for the team on your machine for you.
+
+                <div class="row">
+                    <code class="col-8"><pre>
+import time
+from subprocess import call
+
+BASE_CFL_URL = 'http://www.cfl.ca'
+
+
+def get_schedule_pages_map(season):
+    if season not in ('2013', '2014'):
+        raise Exception('No play-by-play before 2013, 2014')
+    # Before 2013, no play by play for games AFAIK
+    BC_SCHEDULE_PAGE = '{0}/schedule/year/{1}/1'.format(BASE_CFL_URL, season)
+    CAL_SCHEDULE_PAGE = '{0}/schedule/year/{1}/2'.format(BASE_CFL_URL, season)
+    EDM_SCHEDULE_PAGE = '{0}/schedule/year/{1}/3'.format(BASE_CFL_URL, season)
+    SAS_SCHEDULE_PAGE = '{0}/schedule/year/{1}/4'.format(BASE_CFL_URL, season)
+    WIN_SCHEDULE_PAGE = '{0}/schedule/year/{1}/5'.format(BASE_CFL_URL, season)
+    HAM_SCHEDULE_PAGE = '{0}/schedule/year/{1}/6'.format(BASE_CFL_URL, season)
+    TOR_SCHEDULE_PAGE = '{0}/schedule/year/{1}/7'.format(BASE_CFL_URL, season)
+    # Ottawa's 2013 page doesn't exist
+    OTT_SCHEDULE_PAGE = '{0}/schedule/year/{1}/65'.format(BASE_CFL_URL, season)
+    MTL_SCHEDULE_PAGE = '{0}/schedule/year/{1}/9'.format(BASE_CFL_URL, season)
+    SCHEDULE_PAGES_MAP = {
+        'BC': BC_SCHEDULE_PAGE,
+        'Calgary': CAL_SCHEDULE_PAGE,
+        'Edmonton': EDM_SCHEDULE_PAGE,
+        'Saskatchewan': SAS_SCHEDULE_PAGE,
+        'Winnipeg': WIN_SCHEDULE_PAGE,
+        'Hamilton': HAM_SCHEDULE_PAGE,
+        'Toronto': TOR_SCHEDULE_PAGE,
+        'Ottawa': OTT_SCHEDULE_PAGE,
+        'Montreal': MTL_SCHEDULE_PAGE
+    }
+
+    schedule_pages_map = SCHEDULE_PAGES_MAP.copy()
+    if season == '2013':
+        schedule_pages_map.pop('Ottawa', None)
+
+    return schedule_pages_map
+
+
+def collect_schedule_pages_for_teams(season):
+    schedule_pages_map = get_schedule_pages_map(season)
+    SAVED_PATH = os.path.join(PATH_TO_DATA, season)
+
+    for city, url in schedule_pages_map.iteritems():
+        path_to_city_dir = os.path.join(SAVED_PATH, city)
+        name_of_file = os.path.join(path_to_city_dir, 'schedule.html')
+        print 'URL {0}'.format(url)
+        call(['curl', '-o', name_of_file, url])
+        time.sleep(10)
+
+    return True
+                    </pre></code>
+                </div>
+                First we define a helper function, <em>get_schedule_pages_map</em>, which will build us a dictionary (key-value pairing). The keys are the teams for the season, and the value is the URL to its schedule page for that season. To figure out the format of the site's URLs takes nothing more than a few clicks; observe below that the format breaks down to <em>www.cfl.ca/schedule/year/SEASON/TEAM_ID</em>:
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part2-workflow-storage/1_scheduleurl.png" alt="Image of schedule URL">
+                </div>
+                All we need to do is figure out each team's TEAM_ID (by simply clicking each team's schedule page and seeing what it's exposed as in the URL).
+                <br>
+                We use this function when we define <em>collect_schedule_pages_for_teams</em>; all this function does is use the dictionary to grab the schedule page for a team and put the HTML results into the proper directory. Through <em>subprocess</em>'s <em>call</em> function, we use <em><a href="https://en.wikipedia.org/wiki/CURL">cURL</a></em> to store the source code for the schedule page locally to the right directory.
+
+                Now that we have the schedule pages for each team stored where we want them, let's take a closer look at a specific example. Below is a screenshot of Ottawa's 2015 schedule page. On the CFL webpage, for every season since 2013, each team has a schedule page which contains all of the links to the games the team participated in. I've highlighted the important parts required to proceed.
+
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part2-workflow-storage/2_schedulepage.png" alt="Image of schedule page">
+                </div>
+                <br>
+                <div class="row">
+                    <code class="col-8"><pre>
+from bs4 import BeautifulSoup
+from Services.services import get_teams_for_given_season, write_to_csv
+from Services.pbp_scraper_for_game import get_game_rows_from_url
+
+
+def get_game_urls_from_schedule_page(path_to_schedule_page):
+    game_urls = []
+
+    soup = BeautifulSoup(open(path_to_schedule_page))
+    schedule_table = soup.find('div', class_='sked_tbl')
+    # The first row is a header row, and every 2nd row is just
+    # a line break for the table for visual spacing
+    rows = schedule_table.find_all('tr')[1::2]
+    for row in rows:
+        cells = row.find_all('td')
+        cell_with_url = cells[9]
+        href = cell_with_url.a['href']
+        complete_url = BASE_CFL_URL + href
+        game_urls.append(complete_url)
+
+    return game_urls
+
+
+def collect_pbps_for_teams(season):
+    list_of_cities = get_teams_for_given_season(season)
+    SAVED_PATH = os.path.join(PATH_TO_DATA, season)
+    print 'Beginning play by play collection for {0}'.format(season)
+
+    for city in list_of_cities:
+        print '{0}\n--------'.format(city)
+        path_to_city_dir = os.path.join(SAVED_PATH, city)
+        path_to_schedule_page = os.path.join(path_to_city_dir, 'schedule.html')
+        all_game_urls = get_game_urls_from_schedule_page(path_to_schedule_page)
+        for i, url in enumerate(all_game_urls):
+            # Adjust the counter, I want my games starting at 01 not 00
+            i += 1
+            name = str(i)
+            if len(name) == 1:
+                name = '0'+name
+            path_to_pbp_source = os.path.join(
+                path_to_city_dir, 'PlayByPlay', name+'.html'
+            )
+            path_to_pbp_csv = os.path.join(
+                path_to_city_dir, 'Csvs', name+'.csv'
+            )
+            game_rows = get_game_rows_from_url(
+                url, save_to_dest=path_to_pbp_source
+            )
+            write_to_csv(game_rows, path_to_pbp_csv)
+                    </pre></code>
+                </div>
+                <em>get_game_urls_from_schedule_page</em> will take a path to a CFL schedule page, open it and (using our new knowledge of <em>BeautifulSoup</em>) extract from it the URLs to each game's play-by-play. From the screenshot, we can see that the information we want from the schedule is in a <em>div</em> with class <em>sked_tbl</em>. The <em>[1::2]</em> syntax is a neat trick with Python lists that lets us take every 2nd element from the list, starting from the 1st index.
+                <br>
+                In <em>collect_pbps_for_teams</em>, for every team in the season, we simply supply the path for the team's schedule page into the above function, get the returned list of game URLs, and supply each URL to our scraper. There is some slight string manipulation to make sure our games enumerate in a manner I just happen to prefer.
+                <br>
+                <br>
+                At this point, we've completed 90% of our file that will take care of our workflow for us. To finish off the remaining 10%, we'll go over how to add a nice command line interface using the library <em><a href="http://docopt.org/">docopt</a></em>.
+
+                Up to this point we've defined three main useful functions for part of our workflow - functions that ultimately use our scraper on game URLs. But what will be "using" our workflow script will be you, the user. A web user interface would be too much work for how small this project is thus far. A more practical interface would be through the command line. We can do this without <em>docopt</em>, but this library makes everything about the experience (writing and using your script) nicer.
+
+                You can think of this as two parts that sandwich your code at the top and the bottom. The top part's job is to define how your script will be used; what parameters it accepts, what default values they have, and whether they're mandatory or optional. The bottom part's job is to take all of the user given parameters and supply them appropriately to the correct function.
+
+                Here's how our top part looks:
+                <div class="row">
+                    <code class="col-8"><pre>
+"""
+This script will:
+1) Make the necessary directories for the season
+OR
+2) Get the schedule pages for each team in a season, which contains the links to each game
+OR
+3) Get the play-by-play for each game for each team in a season, from the schedule pages
+
+For any given season, (using 2013 as an example)
+- first run 1): PYTHONPATH=. python crawl_schedule_pages.py --season=2013 --mkdirs
+- then run 2): PYTHONPATH=. python crawl_schedule_pages.py --season=2013 --get_schedules
+- lastly run 3): PYTHONPATH=. python crawl_schedule_pages.py --season=2013 --get_pbps
+
+Usage:
+    crawl_schedule_pages.py (--season=<sn>) (--mkdirs|--get_schedules|--get_pbps)
+"""
+                    </pre></code>
+                </div>
+                The """ denote block comments in Python. Comments are ignored when programs are executed, <em>docopt</em> will take these commented instructions and understand them, thanks to its parser. What's *necessary* here is everything from Usage: on down - this is what defines exactly what's allowed and what's not allowed when calling <em>crawl_schedule_pages.py</em>. The parantheses around an argument, such as (--season=&lt;sn&gt;), mean that it's <b>mandatory</b>. The =&lt;sn&gt; tells the <em>docopt</em> parser that we expect a value supplied this argument. The pipe, |, in the second argument (--mkdirs|--get_schedules|--get_pbps) means an exclusive "or". In other words, we want the user to specify one of --mkdirs, --get_schedules, or --get_pbps. Notice how there is no =&lt;value&gt; here; these will just be indicator flags to let us know which function to run.
+                <br>
+                The text above Usage: is purely for the user to see on how to run it. They'll see this message whenever they run this file with --h supplied:
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part2-workflow-storage/3_docopthelp.png" alt="Image of docopt help">
+                </div>
+
+                Here's how the bottom part looks:
+                <div class="row">
+                    <code class="col-8"><pre>
+if __name__ == '__main__':
+    args = docopt(__doc__)
+    season = args['--season']
+    mkdirs = args['--mkdirs']
+    get_schedules = args['--get_schedules']
+    get_pbps = args['--get_pbps']
+
+    if mkdirs:
+        create_data_dirs(season=season)
+    elif get_schedules:
+        collect_schedule_pages_for_teams(season=season)
+    elif get_pbps:
+        collect_pbps_for_teams(season)
+                    </pre></code>
+                </div>
+                The first line basically says: "only run the code below if this script is being called from the command line". Why? Because I might write another Python program later on that imports one of these functions, and I want to separate what this file does when it's run from the command line versus when it's imported. The line below is where <em>docopt</em>'s magic happens: the user's supplied arguments are easily accessible in the <em>args</em> dictionary.
+            </p>
+
+            <p>
+                In the final part of this series, I'll be going over how to read and write data from a NoSQL database called <a href="https://www.mongodb.org/">MongoDB</a>. While our file database that we've assembled with this workflow is fine and usable, oftentimes it is preferable to use an actual database (for instance: here we have two copies - one for each team - for each game). We'll be moving our data into MongoDB and then writing a separate script to pull it out, completing our goal of finding all 3rd down plays that do not result in punts.
+            </p>
+        </div>
+    <footer>
+        © Steven Wu<a class="float-right" href="http://minimalcss.com">Design by Minimal</a>
+    </footer>
+    </body>
+</html>
