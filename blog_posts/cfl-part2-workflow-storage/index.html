@@ -52,7 +52,7 @@
             </p>
             <p>
                 <h4>Part 2:</h4>
-                <h4>Implementation of the Storage Workflow</h4>
+                <h4>Implementation of the Scraping and Storage Workflow</h4>
                 First thing's first: we'll want directories set up - we need a space to store our source data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. We also want a directory set up to store the play-by-play data we parse; .csv files make the most sense, as our play-by-play data already comes in a fixed-row/fixed-column format.
                 <div class="row">
                     <code class="col-8"><pre>
@@ -240,7 +240,59 @@ def collect_pbps_for_teams(season):
                 In <em>collect_pbps_for_teams</em>, for every team in the season, we simply supply the path for the team's schedule page into the above function, get the returned list of game URLs, and supply each URL to our scraper. There is some slight string manipulation to make sure our games enumerate in a manner I just happen to prefer.
                 <br>
                 <br>
-                At this point, we've completed 90% of our file that will take care of our workflow for us. To finish off the remaining 10%, we'll go over how to add a nice command line interface.
+                At this point, we've completed 90% of our file that will take care of our workflow for us. To finish off the remaining 10%, we'll go over how to add a nice command line interface using the library <em><a href="http://docopt.org/">docopt</a></em>.
+
+                Up to this point we've defined three main useful functions for part of our workflow - functions that ultimately use our scraper on game URLs. But what will be "using" our workflow script will be you, the user. A web user interface would be too much work for how small this project is thus far. A more practical interface would be through the command line. We can do this without <em>docopt</em>, but this library makes everything about the experience (writing and using your script) nicer.
+
+                You can think of this as two parts that sandwich your code at the top and the bottom. The top part's job is to define how your script will be used; what parameters it accepts, what default values they have, and whether they're mandatory or optional. The bottom part's job is to take all of the user given parameters and supply them appropriately to the correct function.
+
+                Here's how our top part looks:
+                <div class="row">
+                    <code class="col-8"><pre>
+"""
+This script will:
+1) Make the necessary directories for the season
+OR
+2) Get the schedule pages for each team in a season, which contains the links to each game
+OR
+3) Get the play-by-play for each game for each team in a season, from the schedule pages
+
+For any given season, (using 2013 as an example)
+- first run 1): PYTHONPATH=. python crawl_schedule_pages.py --season=2013 --mkdirs
+- then run 2): PYTHONPATH=. python crawl_schedule_pages.py --season=2013 --get_schedules
+- lastly run 3): PYTHONPATH=. python crawl_schedule_pages.py --season=2013 --get_pbps
+
+Usage:
+    crawl_schedule_pages.py (--season=<sn>) (--mkdirs|--get_schedules|--get_pbps)
+"""
+                    </pre></code>
+                </div>
+                The """ denote block comments in Python. Comments are ignored when programs are executed, <em>docopt</em> will take these commented instructions and understand them, thanks to its parser. What's *necessary* here is everything from Usage: on down - this is what defines exactly what's allowed and what's not allowed when calling <em>crawl_schedule_pages.py</em>. The parantheses around an argument, such as (--season=&lt;sn&gt;), mean that it's <b>mandatory</b>. The =&lt;sn&gt; tells the <em>docopt</em> parser that we expect a value supplied this argument. The pipe, |, in the second argument (--mkdirs|--get_schedules|--get_pbps) means an exclusive "or". In other words, we want the user to specify one of --mkdirs, --get_schedules, or --get_pbps. Notice how there is no =&lt;value&gt; here; these will just be indicator flags to let us know which function to run.
+                <br>
+                The text above Usage: is purely for the user to see on how to run it. They'll see this message whenever they run this file with --h supplied:
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part2-workflow-storage/3_docopthelp.png" alt="Image of docopt help">
+                </div>
+
+                Here's how the bottom part looks:
+                <div class="row">
+                    <code class="col-8"><pre>
+if __name__ == '__main__':
+    args = docopt(__doc__)
+    season = args['--season']
+    mkdirs = args['--mkdirs']
+    get_schedules = args['--get_schedules']
+    get_pbps = args['--get_pbps']
+
+    if mkdirs:
+        create_data_dirs(season=season)
+    elif get_schedules:
+        collect_schedule_pages_for_teams(season=season)
+    elif get_pbps:
+        collect_pbps_for_teams(season)
+                    </pre></code>
+                </div>
+                The first line basically says: "only run the code below if this script is being called from the command line". Why? Because I might write another Python program later on that imports one of these functions, and I want to separate what this file does when it's run from the command line versus when it's imported. The line below is where <em>docopt</em>'s magic happens: the user's supplied arguments are easily accessible in the <em>args</em> dictionary.
             </p>
 
             <p>
