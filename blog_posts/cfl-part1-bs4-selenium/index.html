@@ -74,7 +74,7 @@ pip install docopt
                 </ol>
             </p>
             <p>
-                <h4>The Goal</h4>
+                <h3>The Goal</h3>
                 We want to build a system that can
                 <ol>
                     <li>gather play-by-play information from the CFL's website</li>
@@ -86,8 +86,8 @@ pip install docopt
                 The end result of the full source code can be found <a href-"https://github.com/stevenwu4/CFL">here: https://github.com/stevenwu4/CFL</a>
             </p>
             <p>
-                <h4>Part 1:</h4>
-                <h4>Implementation of the Scraper</h4>
+                <h3>Part 1: Implementation of the Scraper</h3>
+                <h4>Investigating the Data</h4>
                 We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>.
                 <br>
                 <div class="row">
@@ -107,7 +107,9 @@ pip install docopt
                 </div>
                 <br>
                 That's weird; if we click the <b>Play by Play</b> button, we see the play-by-play data right there. How can it be there on the webpage and yet at the same time not be there? Pay attention to the URL; if it changed upon clicking the button, we could just follow the redirect to the new URL and scrape that URL's content - but it doesn't change.
-                <br>
+            </p>
+            <p>
+                <h4>Writing the Scraper - Dealing with the Play By Play Button</h4>
                 To go ahead with one solution to this problem, we're going to be using a package called <em><a href="https://selenium-python.readthedocs.org/getting-started.html">Selenium</a></em>. Selenium allows us to use Python to programatically open up a browser and interact with the different elements of the page. Specifically, it will allow us to click the elusive button that contains the play-by-play HTML we desire.
                 <br>
                 <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
@@ -144,6 +146,9 @@ def get_game_rows_from_url(url):
                     </pre></code>
                 </div>
                 Our function <em>get_game_rows_from_url</em> will receive a <em>url</em> as input. We use the <em>Selenium</em> package's <em>webdriver</em> to open up an instance of Firefox on your computer (note: you need <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox downloaded</a> for this to work!). <em>find_element_by_xpath</em> is a function of the webdriver Firefox instance that returns an element of the HTML based on the XPath you give it (in our case, the XPath to the <b>Play by Play</b> button that we defined as <em>PLAYBYPLAY_BTN_XPATH</em>). This returned element has a function <em>click</em> that clicks our button for us. We load the resulting HTML into <em>BeautifulSoup</em> to focus on the scraping.
+            </p>
+            <p>
+                <h4>Writing the Scraper: Extracting the Play By Play</h4>
                 <div class="row">
                     <code class="col-8"><pre>
     # Get away/home teams
@@ -204,7 +209,7 @@ def get_game_rows_from_url(url):
     return list_of_game_rows
                     </pre></code>
                 </div>
-                The scraping is relatively straightforward from here. BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or new to Python itself. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find">find</a></em> and <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find-all">find_all</a></em> functions are your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, let's look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>. Below is a screenshot that shows how we arrive at getting the rows.
+                BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or new to Python itself. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find">find</a></em> and <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find-all">find_all</a></em> functions are your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, let's look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>. Below is a screenshot that shows how we arrive at getting the rows.
                 <div class="row">
                     <img class="col-10" src="../../img/cfl-part1-bs4-selenium/4_pbphtmlstructure.png" alt="Image of HTML of play-by-play">
                 </div>
@@ -214,7 +219,12 @@ def get_game_rows_from_url(url):
                 We grab the away and home teams that are playing the specific game. We identify the table that will contain the rows of our play-by-play. From there, we grab all of the data we care about and store the play-by-play as a list of lists, where each inner list is a row of the play-by-play. Finally, we close the Firefox instance that we opened.
             </p>
 
-            <p>To view the final version of the file, visit <a href="https://github.com/stevenwu4/CFL/blob/master/Services/pbp_scraper_for_game.py">https://github.com/stevenwu4/CFL/blob/master/Services/pbp_scraper_for_game.py</a>.
+            <p>
+                <h4>The Result</h4>
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part1-bs4-selenium/5_pbpcsv.png" alt="Image of final play-by-play">
+                </div>
+                To view the final version of the file, visit <a href="https://github.com/stevenwu4/CFL/blob/master/Services/pbp_scraper_for_game.py">https://github.com/stevenwu4/CFL/blob/master/Services/pbp_scraper_for_game.py</a>.
             <br>
             A couple of notes on differences you'll see:
             <ul>
@@ -228,8 +238,6 @@ def get_game_rows_from_url(url):
                 </div>
             </li>
             </ul>
-            </p>
-            <p>
                 Now that we're done implementing our scraper, we need to use it to grab the data. Now, we *could* just manually take every URL for a season, and call this script from the command line to have the play-by-play we want. However, it's good practice to automate as much as possible in our workflow. In the next part of this series, I will go over how to flesh out a basic system that will take care of a workflow that will use this scraper to collect the data and store it locally onto your machine</a>.
 
                 <a href="../cfl-part2-workflow-storage">Click here for Part 2 in this series</a>
