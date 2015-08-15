@@ -10,6 +10,7 @@
         <meta name="description" content="Personal website for Steven Wu, with blog posts about data">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
         <link rel="stylesheet" href="../../css/minimal.css">
+        <link rel="stylesheet" href="../../css/blog.css">
 
         <script>
           (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -21,7 +22,7 @@
         </script>
     </head>
 
-    <body>
+    <body class="main">
         <div id="banner"></div>
         <header id="header" role="banner">
             <h1><a href="../../">Steven Wu</a></h1>
@@ -60,7 +61,7 @@
                 <br>
                 If this is new territory for you, ignore the section on virtual environments. Once you have <em>pip</em> installed, you can run the following commands to install the required libraries to complete this walkthrough.
                 <div class="row">
-                    <code class="col-8"><pre>
+                    <code class="col-10"><pre>
 pip install BeautifulSoup4
 pip install selenium
 pip install docopt
@@ -114,7 +115,7 @@ pip install docopt
                 <br>
                 <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
                 <div class="row">
-                    <code class="col-8"><pre>
+                    <code class="col-10"><pre>
 import time
 import csv
 from bs4 import BeautifulSoup
@@ -135,7 +136,7 @@ PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'
                 <br>
                 Now we can start creating the function.
                 <div class="row">
-                    <code class="col-8"><pre>
+                    <code class="col-10"><pre>
 def get_game_rows_from_url(url):
     driver = webdriver.Firefox()
     driver.get(url)
@@ -150,7 +151,7 @@ def get_game_rows_from_url(url):
             <p>
                 <h4>Writing the Scraper: Extracting the Play By Play</h4>
                 <div class="row">
-                    <code class="col-8"><pre>
+                    <code class="col-10"><pre>
     # Get away/home teams
     away_div = soup.find('div', id='awayteam')
     away_team = away_div.find('h3', class_='cityname').text
@@ -232,7 +233,7 @@ def get_game_rows_from_url(url):
                 <li>There's a function imported, <em>write_to_csv</em>, which will take the list of lists and convert it to a .csv for storage.</li>
                 <li>Using the extremely handy library <em>docopt</em>, the script can be used from the command line. For example, in the /CFL directory, you would type:
                 <div class="row">
-                    <code class="col-8">
+                    <code class="col-10">
                     PYTHONPATH=. python pbp_scraper_for_game.py --url=http://www.cfl.ca/statistics/statsGame/id/12833 --final_name=blah.csv
                     </code>
                 </div>
