@@ -64,8 +64,7 @@
                     <code class="col-10"><pre>
 pip install BeautifulSoup4
 pip install selenium
-pip install docopt
-                    </pre></code>
+pip install docopt</pre></code>
                 </div>
                 Before we jump into it, there's two guidelines to be conscious of:
                 <ol>
@@ -120,8 +119,7 @@ import time
 import csv
 from bs4 import BeautifulSoup
 from selenium import webdriver
-PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'
-                    </pre></code>
+PLAYBYPLAY_BTN_XPATH = '//div[@id='playbyplay-button']/a'</pre></code>
                 </div>
                 The <em>time</em> library is necessary to respect the rules of <a href="http://www.cfl.ca/robots.txt">http://www.cfl.ca/robots.txt</a>. At the time of this writing, all crawlers are allowed but there is a crawl delay of 2. The <em>time</em> library has a function, <em>sleep</em>, which lets us delay our crawls.
                 <br>
@@ -143,8 +141,7 @@ def get_game_rows_from_url(url):
     time.sleep(10)
     playbyplay_btn = driver.find_element_by_xpath(PLAYBYPLAY_BTN_XPATH)
     playbyplay_btn.click()
-    soup = BeautifulSoup(driver.page_source)
-                    </pre></code>
+    soup = BeautifulSoup(driver.page_source)</pre></code>
                 </div>
                 Our function <em>get_game_rows_from_url</em> will receive a <em>url</em> as input. We use the <em>Selenium</em> package's <em>webdriver</em> to open up an instance of Firefox on your computer (note: you need <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox downloaded</a> for this to work!). <em>find_element_by_xpath</em> is a function of the webdriver Firefox instance that returns an element of the HTML based on the XPath you give it (in our case, the XPath to the <b>Play by Play</b> button that we defined as <em>PLAYBYPLAY_BTN_XPATH</em>). This returned element has a function <em>click</em> that clicks our button for us. We load the resulting HTML into <em>BeautifulSoup</em> to focus on the scraping.
             </p>
@@ -207,8 +204,7 @@ def get_game_rows_from_url(url):
 
     driver.close()
 
-    return list_of_game_rows
-                    </pre></code>
+    return list_of_game_rows</pre></code>
                 </div>
                 BeautifulSoup4 has excellent documentation, but it can be daunting if you are new to the concepts or new to Python itself. Two rules of thumb that made it easiest for me when getting the hang of things: 1) The <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find">find</a></em> and <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#find-all">find_all</a></em> functions are your best friend, and 2) starting from the soup you obtain by feeding in the original HTML, any resulting object from using <em>find</em> can also use <em>find</em> on itself. For an example of what I'm talking about, let's look at the 3 lines of code that lead to us getting the table containing the play-by-play data, <em>pbp_table</em>. Below is a screenshot that shows how we arrive at getting the rows.
                 <div class="row">

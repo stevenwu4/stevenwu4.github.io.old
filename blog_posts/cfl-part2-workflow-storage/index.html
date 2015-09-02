@@ -57,8 +57,7 @@
                 First thing's first: we'll want directories set up - we need a space to store our source data locally. It's a good idea to store the HTML that we get the data from, because websites change designs (and content) constantly. It wouldn't be unheard of for the play-by-play to retroactively change or disappear - this way, any results we derive will have the source from which they came from to back it up. We also want a directory set up to store the play-by-play data we parse; .csv files make the most sense here, as our play-by-play data already comes in a fixed-row/fixed-column format.
                 <h4>1. Automate Creating the Directories</h4>
                 <div class="row">
-                    <code class="col-10"><pre>
-import os
+                    <code class="col-10"><pre>import os
 
 TEAMS_2013 = [
     'BC',
@@ -110,8 +109,7 @@ def create_data_dirs(season):
         path_to_pbp_source_dir = os.path.join(SAVED_PATH, city, 'PlayByPlay')
         os.mkdir(path_to_pbp_source_dir)
         path_to_pbp_csvs_dir = os.path.join(SAVED_PATH, city, 'Csvs')
-        os.mkdir(path_to_pbp_csvs_dir)
-                    </pre></code>
+        os.mkdir(path_to_pbp_csvs_dir)</pre></code>
                 </div>
                 The <em><a href="https://docs.python.org/2/library/os.html">os</a></em> library is an extremely useful standard library that allows us to perform operating system functionality, like manipulating directories, through our program. <em>get_teams_for_given_season</em> is a simple function that gives us a list of teams that correspond to the given season. The function <em>create_data_dirs</em> will take a season, use the <em>get_teams_for_given_season</em> function to get the right teams, and will create the <em>PlayByPlay</em> and <em>Csvs</em> directories for the team on your machine for you.
 
@@ -169,8 +167,7 @@ def collect_schedule_pages_for_teams(season):
         call(['curl', '-o', name_of_file, url])
         time.sleep(10)
 
-    return True
-                    </pre></code>
+    return True</pre></code>
                 </div>
                 Now that we have our folders setup, we can start filling them up with data. Worrying about grabbing all of the play-by-play right now would be trying to run before we can walk; a smarter approach is to try and see if we can get the schedule page for each team and get the links to each game that way. First we define a helper function, <em>get_schedule_pages_map</em>, which will build us a dictionary (key-value pairing). The keys are the teams for the season, and the value is the URL to its schedule page for that season. To figure out the format of the site's URLs takes nothing more than a few clicks; observe below that the format breaks down to <em>www.cfl.ca/schedule/year/SEASON/TEAM_ID</em>:
                 <div class="row">
@@ -235,8 +232,7 @@ def collect_pbps_for_teams(season):
             game_rows = get_game_rows_from_url(
                 url, save_to_dest=path_to_pbp_source
             )
-            write_to_csv(game_rows, path_to_pbp_csv)
-                    </pre></code>
+            write_to_csv(game_rows, path_to_pbp_csv)</pre></code>
                 </div>
                 <em>get_game_urls_from_schedule_page</em> will take a path to a CFL schedule page, open it and (using our newly acquired knowledge of how to use <em>BeautifulSoup</em>) extract the URLs to each game's play-by-play from it. From the screenshot, we can see that the information we want from the schedule is in a <em>div</em> with class <em>sked_tbl</em>. The <em>[1::2]</em> syntax is a neat trick with Python lists that lets us take every 2nd element from the list, starting from the 1st index.
                 <br>
@@ -252,8 +248,7 @@ def collect_pbps_for_teams(season):
                 You can think of this as two parts that sandwich your code at the top and the bottom. The top part's job is to define how your script will be used; what parameters it accepts, what default values they have, and whether they're mandatory or optional. The bottom part's job is to take all of the user given parameters and supply them appropriately to the correct function.
 
                 Here's how our top part looks:
-                <div class="row">
-                    <code class="col-10"><pre>
+                <div class="row"><code class="col-10"><pre>
 """
 This script will:
 1) Make the necessary directories for the season
@@ -269,8 +264,7 @@ For any given season, (using 2013 as an example)
 
 Usage:
     crawl_schedule_pages.py (--season=<sn>) (--mkdirs|--get_schedules|--get_pbps)
-"""
-                    </pre></code>
+"""</pre></code>
                 </div>
                 """ denotes block comments in Python. Comments are ignored when programs are executed, but <em>docopt</em> will take these commented instructions and understand them, thanks to its parser.
                 <br>
@@ -282,8 +276,7 @@ Usage:
                 </div>
 
                 Here's how the bottom part looks:
-                <div class="row">
-                    <code class="col-10"><pre>
+                <div class="row"><code class="col-10"><pre>
 if __name__ == '__main__':
     args = docopt(__doc__)
     season = args['--season']
@@ -296,8 +289,7 @@ if __name__ == '__main__':
     elif get_schedules:
         collect_schedule_pages_for_teams(season=season)
     elif get_pbps:
-        collect_pbps_for_teams(season)
-                    </pre></code>
+        collect_pbps_for_teams(season)</pre></code>
                 </div>
                 The first line basically says: "only run the code below if this script is being called from the command line". Why? Because I might write another Python program later on that imports one of these functions, and I want to separate what this file does when it's run from the command line versus when it's imported. The line below that is where <em>docopt</em>'s magic happens: the user's supplied arguments are easily accessible in the <em>args</em> dictionary. The rest comes down to simple conditionals based on what the user's arguments were that allow us to perform the exact function the user intended on calling.
             <p>
