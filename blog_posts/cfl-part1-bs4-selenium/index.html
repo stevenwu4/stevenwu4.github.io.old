@@ -73,8 +73,8 @@ pip install docopt</pre></code>
                     <li>Every site also has a robots.txt file, which contains rules about which crawlers are allowed/disallowed as well as a crawl delay. Always respect the crawl delay!</li>
                 </ol>
             </p>
+            <h3>The Goal</h3>
             <p>
-                <h3>The Goal</h3>
                 We want to build a system that can
                 <ol>
                     <li>gather play-by-play information from the CFL's website</li>
@@ -85,9 +85,9 @@ pip install docopt</pre></code>
                 <br>
                 The end result of the full source code can be found <a href-"https://github.com/stevenwu4/CFL">here: https://github.com/stevenwu4/CFL</a>
             </p>
+            <h3>Part 1: Implementation of the Scraper</h3>
+            <h4>Investigating the Data</h4>
             <p>
-                <h3>Part 1: Implementation of the Scraper</h3>
-                <h4>Investigating the Data</h4>
                 We want a function that, given a URL from the CFL website, will scrape the play-by-play. Let's look at the first game of the 2015 season for the Ottawa Redblacks: <a href="http://www.cfl.ca/statistics/statsGame/id/12833">http://www.cfl.ca/statistics/statsGame/id/12833</a>.
                 <br>
                 <div class="row">
@@ -108,8 +108,8 @@ pip install docopt</pre></code>
                 <br>
                 That's weird; if we click the <b>Play by Play</b> button, we see the play-by-play data right there. How can it be there on the webpage and yet at the same time not be there? Pay attention to the URL; if it changed upon clicking the button, we could just follow the redirect to the new URL and scrape that URL's content - but it doesn't change.
             </p>
+            <h4>Writing the Scraper - Dealing with the Play By Play Button</h4>
             <p>
-                <h4>Writing the Scraper - Dealing with the Play By Play Button</h4>
                 To go ahead with one solution to this problem, we're going to be using a package called <em><a href="https://selenium-python.readthedocs.org/getting-started.html">Selenium</a></em>. Selenium allows us to use Python to programatically open up a browser and interact with the different elements of the page. Specifically, it will allow us to click the elusive button that contains the play-by-play HTML we desire.
                 <br>
                 <em><a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup</a></em> is a library that will take the resulting HTML after the <b>Play by Play</b> button click and allow us easier, more organized access to the information we actually want.
@@ -145,8 +145,8 @@ def get_game_rows_from_url(url):
                 </div>
                 Our function <em>get_game_rows_from_url</em> will receive a <em>url</em> as input. We use the <em>Selenium</em> package's <em>webdriver</em> to open up an instance of Firefox on your computer (note: you need <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox downloaded</a> for this to work!). <em>find_element_by_xpath</em> is a function of the webdriver Firefox instance that returns an element of the HTML based on the XPath you give it (in our case, the XPath to the <b>Play by Play</b> button that we defined as <em>PLAYBYPLAY_BTN_XPATH</em>). This returned element has a function <em>click</em> that clicks our button for us. We load the resulting HTML into <em>BeautifulSoup</em> to focus on the scraping.
             </p>
+            <h4>Writing the Scraper: Extracting the Play By Play</h4>
             <p>
-                <h4>Writing the Scraper: Extracting the Play By Play</h4>
                 <div class="row">
                     <code class="col-10"><pre>
     # Get away/home teams
@@ -215,9 +215,8 @@ def get_game_rows_from_url(url):
                 <br>
                 We grab the away and home teams that are playing the specific game. We identify the table that will contain the rows of our play-by-play. From there, we grab all of the data we care about and store the play-by-play as a list of lists, where each inner list is a row of the play-by-play. Finally, we close the Firefox instance that we opened.
             </p>
-
+            <h4>The Result</h4>
             <p>
-                <h4>The Result</h4>
                 <div class="row">
                     <img class="col-10" src="../../img/cfl-part1-bs4-selenium/5_pbpcsv.png" alt="Image of final play-by-play">
                 </div>
@@ -229,15 +228,16 @@ def get_game_rows_from_url(url):
                 <li>There's a function imported, <em>write_to_csv</em>, which will take the list of lists and convert it to a .csv for storage.</li>
                 <li>Using the extremely handy library <em>docopt</em>, the script can be used from the command line. For example, in the /CFL directory, you would type:
                 <div class="row">
-                    <code class="col-10">
-                    PYTHONPATH=. python pbp_scraper_for_game.py --url=http://www.cfl.ca/statistics/statsGame/id/12833 --final_name=blah.csv
-                    </code>
+                    <code class="col-10"><pre>
+PYTHONPATH=. python pbp_scraper_for_game.py
+--url=http://www.cfl.ca/statistics/statsGame/id/12833 --final_name=blah.csv</pre></code>
                 </div>
-            </li>
+                </li>
             </ul>
                 Now that we're done implementing our scraper, we need to use it to grab the data. Now, we *could* just manually take every URL for a season, and call this script from the command line to have the play-by-play we want. However, it's good practice to automate as much as possible in our workflow. In the next part of this series, I will go over how to flesh out a basic system that will take care of a workflow that will use this scraper to collect the data and store it locally onto your machine</a>.
-
-                <a href="../cfl-part2-workflow-storage">Click here for Part 2 in this series</a>
+            </p>
+            <p>
+                <a href="../cfl-part2-workflow-storage">>> Click here for Part 2 in this series</a>
             </p>
         </div>
     <footer>
