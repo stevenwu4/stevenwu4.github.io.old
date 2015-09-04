@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
     run_storage_of_games_on_season(season, cities)</pre></code>
                 </div>
-                Nothing new here. When running this script, we will want to supply the season year of the data we want to migrate. In Part 2, we defined a <em>get_teams_for_give_season</em> function, and since it is handy, we will move it to a general services.py file so that multiple files may use its functionality through imports. Notice that from the same file, we are importing another useful function, <em>convert_csv_to_list</em>. As the name suggests, it will take the path to a .csv and return it as a list of lists (which we will be dumping into the "list_of_game_rows" field of a game document). This is defined as such:
+                Nothing new here except for some libraries we're importing, but I'll expand on those when the time is right. When running this script, we will want to supply the season year of the data we want to migrate. In Part 2, we defined a handy <em>get_teams_for_given_season</em> function; so handy in fact that we will move it to a general services.py file so that multiple files may use its functionality through imports. Notice that from the same file, we are importing another useful function, <em>convert_csv_to_list</em>. As the name suggests, it will take the path to a .csv and return it as a list of lists (which we will be dumping into the "list_of_game_rows" field of a game document). This is defined as such:
                 <div class="row">
                     <code class="col-10"><pre>
 def convert_csv_to_list(path_to_csv):
@@ -170,11 +170,11 @@ def run_storage_of_games_on_season(season, list_of_cities):
                 games_collection.insert(game_data)<sup>5</sup></pre></code>
                 </div>
                 <ol>
-                    <li>We initialize a client for a MongoDB instance; I will show you how to run a local MongoDB server for this client at the end.</li>
+                    <li>We initialize a client for a MongoDB instance; I will show you how to run a local MongoDB server for this client when I go over running these files at the end of the article.</li>
                     <li>From our client, we can access databases using key look-ups. The convention for our database names for this project will be 'CFL_' prepended to the season, e.g: CFL_2013. Collections can similarly be accessed by name using a key look-up on a database object (here, our games collection is named 'games').</li>
-                    <li>Up to this point, we just iterate through all of the teams, find all of the .csvs, and for each .csv, we transform it into a document that we want to store in MongoDB. We'll define this function immediately after these notes.</li>
-                    <li>Now we can callback to my previous promise of explaining the reasoning behind "game_id" being a necessary key in our game document. MongoDB automatically assigns a unique "_id" to an *inserted* document, but our .csv's have no such distinction aside from the play-by-play contents itself. The workflow for each .csv is basically: transform into a document -> check if this game isn't already in MongoDB -> if it isn't add it in, otherwise we don't need to do anything. In the check, we are looking to see if there's already a game in MongoDB with the same play-by-play - thus the same game.</li>
-                    <li>Remember that a collection can have adding/removing/updating of documents. Here, we're adding.</li>
+                    <li>Up to this point, we just iterate through all of the teams, find all of the .csvs, and for each .csv, we transform it into a document that we want to store in MongoDB. We'll define <em>get_info_from_game</em> immediately after these notes.</li>
+                    <li>Now we can callback to my previous promise of explaining the reasoning behind "game_id" being a necessary key in our game document. MongoDB automatically assigns a unique "_id" to an *inserted* document, but our .csv's have no such distinction of uniqueness aside from the play-by-play contents itself (with the assumption that no two games will have the exact same play-by-play, which is pretty safe given how detailed the information is in the play description). The workflow for each .csv is basically: transform into a document -> check if this game isn't already in MongoDB -> if it isn't add it in, otherwise we don't need to do anything. We do the check by using <em>find_one</em> - pymongo's interface to <a href="http://docs.mongodb.org/master/reference/method/db.collection.findOne/"><em>findOne</em></a> - to find a game document with the same "game_id" hash, which would imply the same game. Note that <em>find_one</em> takes a dictionary as the query argument; adding more key-value pairs would make your query even more specific.</li>
+                    <li>Remember that a collection can have searching/adding/removing/updating of documents. Here, we're adding.</li>
                 <br>
                 We are finished with this task once we are done going through the details of turning our .csv into a document by implementing <em>get_info_from_game</em>.
                 <div class="row">
@@ -205,15 +205,15 @@ def get_info_from_game(season, city, csv):
                     <li>Remember that a document is just a dictionary.</li>
                     <li>Here we're using the service function I defined above.</li>
                     <li>Here we're making use of the datetime library to mark the exact time of creation of this object.</li>
-                    <li>We use the standard library <em><a href="https://docs.python.org/2/library/md5.html">md5</a></em> to create the hash id for our "game_id" using our play-by-play game rows. We use the .join() function to flatten our list of lists into a string to pass into the md5 function, as the functin doesn't know what to do with a list.</li>
+                    <li>We use the standard library <em><a href="https://docs.python.org/2/library/md5.html">md5</a></em> to create the hash id for our "game_id" using our play-by-play game rows. We use the .join() function to flatten our list of lists into a string to pass into the md5 function, as it doesn't know what to do with a list.</li>
                 </ol>
-                The benefits may not be immediately obvious with this example, as our document has only a minor amount of additional information compared to our .csv. However, the benefits will grow as your project grows; you can add fields that contain meta information about the game (for instance; the starters of the game). Assuming you have a written function that finds the starters of a game, with a .csv you would have to call it every time you wanted to access that information from a game (this is bad practice that grows worser with the run time of the function). With our database instead, you could just call it once, store that in the document in a field, and then access it by the field key whenever you wanted the information.
+                The benefits may not be immediately obvious with this example, as our document has only a minor amount of additional information compared to our .csv. However, the benefits will grow as your project grows; you can add fields that contain meta information about the game (for instance; the starters of the game). Assume that you have a written function that finds the starters of a game - with a .csv you would have to call it every time you wanted to access that information from a game (this is bad practice that grows worser with the run time of the function). With our database instead, you could just call it once, store that in the document in a field, and then access it by the field key whenever you wanted the information.
             </p>
             <h4>Running the Data Migration from Csvs to MongoDB</h4>
             <p>
                 Before running this, you need a server running. You can do this locally by simply opening up a new tab in your Terminal and typing:
                 <div class="row"><code class="col-10">mongod</code></div>
-                Running the following command will get your .csv's in 2013 migrated over to MongoDB:
+                Running the following command in another Terminal tab will get your .csv's in 2013 migrated over to MongoDB:
                 <div class="row"><code class="col-10">PYTHONPATH=. python Tasks/store_csv_info_to_db.py --season=2013</code></div>
                 You should see the following output:
                 <div class="row">
@@ -229,17 +229,17 @@ db.games.find().count()<sup>5</sup>
 db.games.findOne()<sup>6</sup>
 </pre></code></div>
                 <ol>
-                    <li>This command is your interface to MongoDB from the command line.</li>
+                    <li>This command is your interface to MongoDB from the command line. You should see output indicating that you are now in the Mongo shell, which can interpret the following five commands.</li>
                     <li>This command lists all databases for this client.</li>
-                    <li>This command uses the 'CFL_2013' database our script created.</li>
-                    <li>This command shows all of the collections in the 'CFL_2013' database; right now, we only have the 'games' collection</li>
+                    <li>This command uses the 'CFL_2013' database that our previously ran script created.</li>
+                    <li>This command shows all of the collections in the 'CFL_2013' database; right now, we only have the 'games' collection.</li>
                     <li>This command gives you the number of total game documents we have in the collection; you should have 85, which agrees with the number of games at <a href="http://www.cfl.ca/schedule/year/2013/time_zone/0"> the CFL 2013 schedule website</a>.</li>
                     <li>This command shows you what one of the game documents looks like.</li>
                 </ol>
             </p>
             <h4>Getting All 3rd Down Plays</h4>
             <p>
-                At this point, there are no new tools needed to be learned to get the job done. We'll use what we learned about <em>pymongo</em> to connect to our database, and for each game, we do a simple conditional check: if the down is a 3rd down and the conveniently stored play type is not a punt, we'll add that play as a row to our resulting output .csv.
+                At this point, there are no new tools needed to be learned to get the job done. We'll use what we learned about <em>pymongo</em> to connect to our database, and for each game, we do a simple conditional check: if the down is a 3rd down and the (conveniently stored) play type is not a punt, we'll add that play as a row to our resulting output .csv.
             <div class="row"><code class="col-10"><pre>
 """
 Usage:
@@ -294,7 +294,7 @@ if __name__ == '__main__':
                 </ul>
             </p>
             <p>
-            This work could have been condensed into one script, but if bugs occur in any part of the workflow (to name a few examples: it could break in the scraping when the site changes, or if you wanted to edit the desired output to exclude punt singles as well as punts), then you would need to restart the whole process - wastefully re-requesting HTML data that you've already seen. This process lends to results that are reproducible and scalable, which are attributes you should always strive for when programming. My hope is that this tutorial not only helps you understand why building a system of programs like these is more desirable, but *how* to do actually go about doing it. Thanks for reading!
+            This work could have been condensed into one script, but if bugs occur in any part of the workflow (to name a few examples: it could break in the scraping when the site changes, or if you wanted to edit the desired output to exclude punt singles as well as punts), then you would need to restart the whole process - wastefully re-requesting HTML data that you've already seen. This process lends to results that are reproducible and scalable, which are attributes you should always strive for when programming. My hope is that this tutorial not only helps you understand why building a system of programs in this manner is more desirable, but *how* to do actually go about doing it. Thanks for reading!
             </p>
             <p>
                 <a href="../cfl-part1-bs4-selenium">>> Click here to go back to Part 1 in this series</a>
