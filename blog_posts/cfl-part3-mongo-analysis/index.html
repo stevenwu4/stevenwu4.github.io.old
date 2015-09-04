@@ -1,0 +1,308 @@
+<!doctype html>
+
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Steven Wu</title>
+
+        <meta name="author" content="Steven Wu">
+        <meta name="description" content="Personal website for Steven Wu, with blog posts about data">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../../css/minimal.css">
+        <link rel="stylesheet" href="../../css/blog.css">
+
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+          ga('create', 'UA-58456323-1', 'auto');
+          ga('send', 'pageview');
+        </script>
+    </head>
+
+    <body class="main">
+        <div id="banner"></div>
+        <header id="header" role="banner">
+            <h1><a href="../../">Steven Wu</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="../../">About</a></li>
+                    <li><a href="../../blog_posts/">Blog</a></li>
+                    <li><a href="https://github.com/stevenwu4">GitHub</a></li>
+                    <li><a href="https://www.linkedin.com/profile/view?id=165873568">LinkedIn</a></li>
+                    <li><a href="../Steven_Wu_Resume.pdf">Resume</a></li>
+                    <li><a href="mailto:steven.wu.work@gmail.com?subject=Emailing from your website">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <h2>MongoDB and Data Analysis of CFL Play-By-Play Data in Python</h2>
+        <h4>Aug 3, 2015</h4>
+
+        <div>
+            <p>
+                In <a href="../cfl-part2-workflow-storage">Part 2</a>, we wrote a command line interface to a Python program that will handle grabbing all of the CFL play-by-play data for any season in a matter of a few clicks and keystrokes.
+                <br>
+                To finish this tutorial, we're going to migrate our data from a folder & file structure to a more sophisticated method of data storage, using a NoSQL database called <em><a href="https://www.mongodb.org/">MongoDB</a></em>. <a href="http://programmers.stackexchange.com/questions/190482/why-use-a-database-instead-of-just-saving-your-data-to-disk">There are many reasons as to why one should use a database</a>, whether it's a relational (SQL) or non-relational (NoSQL) one, but one example of a pain point we're addressing here is that our current data storage has two copies of each game for a given season. Remember, our end goal is to have a list of 3rd down plays that don't result in punts for a season. To do this, we're going to need to look through every game. If we naively looked through every game in, say, the 2013 season, then we would end up with duplicates of every such row. It would be annoying and inefficient to code up logic to handle the duplicates when we have the ability to design our data source in a better way.
+            </p>
+            <h3>Part 3: Implementation of MongoDB Storage and Analysis Script</h3>
+            <p>
+                Before we get into the implementation, there's some knowledge regarding MongoDB worth going over.
+            </p>
+            <h4>MongoDB Introduction</h4>
+            <p>
+                If you want a comprehensive tutorial and introduction, I encourage and recommend the documentation on <a href="http://docs.mongodb.org/getting-started/python/">their website</a>. For a much more brief primer, all you need to know is:
+                <ul>
+                    <li>You can have many databases.</li>
+                    <li>Each database can have many collections. Collections are just a set of documents that you can update, add to, or remove from.</li>
+                    <li>Each collection contains documents and allows for searching/adding/removing/updating of documents.</li>
+                    <li>A document is a just a dictionary/key-value pairing, which looks like this:
+                        <div class="row">
+                            <code class="col-10"><pre>
+{
+    'field1': 'value1',
+    'field2': ['value2a', 'value2b', 'value2c', ...],
+    'field3': {
+        'subfield1': 'value3a',
+        'subfield2': 'value3b',
+        ...
+    },
+    ...
+}
+                            </pre></code>
+                        </div>
+                        where values can be of type int, float, string, list, or another dictionary.
+                    </li>
+                    <li>There exists a driver called <em>pymongo</em> which allows us to use MongoDB through Python.</h4>
+                </ul>
+            </p>
+            <h4>Implementation of the Data Migration from Csvs to MongoDB</h4>
+            <p>
+            Here's what we want accomplished:
+            <ul>
+                <li>Create a database per season</li>
+                <li>In each database, create a collection of games</li>
+                <li>In each collection of games, we will have documents, each of which represent a game, that look like:
+                    <div class="row">
+                        <code class="col-10"><pre>{
+    'game_id': '89743c2bc06941fec3021406280d0393'<sup>1</sup>,
+    'away_team_info': {
+        'city': 'BC',
+    },
+    'home_team_info': {
+        'city': 'BC',
+    },
+    'list_of_game_rows': [
+        ["Time", "Down", "Type", "Yards", "Details", "BC", "Calgary"],
+        [
+            "15:00", "0", "Kickoff", "26",
+            "Hugh O'Neill kicks off to the Cgy8. Larry Taylor return for 26 yards to Cgy34.",
+            "0", "0"
+        ],
+        ...
+    ],
+    'created_on': datetime.datetime(2015, 9, 2, 13, 39, 42, 862734)<sup>2</sup>,
+}</pre></code></div>
+                Elaborating on the above footnotes:
+                        <ol>
+                            <li>When working with databases, your documents (or rows for SQL databases) must have <em>a primary key</em> - a unique identifier.  MongoDB documents automatically initialize an "_id" field (e.g: <em>ObjectId("55e781786e85b524f61dd99f")</em>) which guarantees uniqueness (in other words, if you query the whole collection for all documents that have the "_id" <em>ObjectId("55e781786e85b524f61dd99f")</em>, you will only get one document back). So why are we initializing another hash id, "game_id"? You can think of this one as condensing the game's rows into 32 digits. More on this later.</li>
+                            <li><a href="https://docs.python.org/2/library/datetime.html">datetime</a> is an extremely useful standard library of Python that allows for date and time manipulation. This is an instance of a datetime object that contains information about the date and time at which this document was created by a user.</li>
+                        </ol>
+                </li>
+            </ul>
+            </p>
+            <p>
+                Let's set up our program's docopt interface - remember what we did at the end of <a href="">Part 2</a> after writing our functions? This time, we'll write the interface first instead, and work on down to implement the missing pieces required to finish our program.
+                <div class="row">
+                    <code class="col-10"><pre>
+"""
+Usage:
+    store_csv_info_to_db.py (--season=<sn>)
+"""
+import os
+from md5 import md5
+from pymongo import MongoClient
+from datetime import datetime
+from docopt import docopt
+
+from Services.constants import PATH_TO_DATA
+from Services.services import convert_csv_to_list, get_teams_for_given_season
+
+if __name__ == '__main__':
+    args = docopt(__doc__)
+    season = args['--season']
+    cities = get_teams_for_given_season(season)
+
+    run_storage_of_games_on_season(season, cities)</pre></code>
+                </div>
+                Nothing new here. When running this script, we will want to supply the season year of the data we want to migrate. In Part 2, we defined a <em>get_teams_for_give_season</em> function, and since it is handy, we will move it to a general services.py file so that multiple files may use its functionality through imports. Notice that from the same file, we are importing another useful function, <em>convert_csv_to_list</em>. As the name suggests, it will take the path to a .csv and return it as a list of lists (which we will be dumping into the "list_of_game_rows" field of a game document). This is defined as such:
+                <div class="row">
+                    <code class="col-10"><pre>
+def convert_csv_to_list(path_to_csv):
+    with open(path_to_csv, 'rU') as f:
+        reader = csv.reader(f)
+        list_of_game_rows = [row for row in reader]
+
+    return list_of_game_rows</pre></code>
+                </div>
+                Using the season given and its associated list of teams, we want to run the migration using <em>run_storage_of_games_on_season</em>. Let's write that function now.
+                <div class="row">
+                    <code class="col-10"><pre>
+def run_storage_of_games_on_season(season, list_of_cities):
+    client = MongoClient()<sup>1</sup>
+    season_db = client['CFL_' + season]<sup>2</sup>
+    games_collection = season_db['games']
+
+    for city in list_of_cities:
+        print 'Storing games for {0}'.format(city)
+        path_to_csvs = os.path.join(
+            PATH_TO_DATA, season, city, 'Csvs'
+        )
+        all_csvs = [f for f in os.listdir(path_to_csvs) if f.endswith('.csv')]
+        for csv in all_csvs:
+            game_data = get_info_from_game(season, city, csv)<sup>3</sup>
+            saved_game = games_collection.find_one(
+                {'game_id': game_data['game_id']}<sup>4</sup>
+            )
+            if not saved_game:
+                games_collection.insert(game_data)<sup>5</sup></pre></code>
+                </div>
+                <ol>
+                    <li>We initialize a client for a MongoDB instance; I will show you how to run a local MongoDB server for this client at the end.</li>
+                    <li>From our client, we can access databases using key look-ups. The convention for our database names for this project will be 'CFL_' prepended to the season, e.g: CFL_2013. Collections can similarly be accessed by name using a key look-up on a database object (here, our games collection is named 'games').</li>
+                    <li>Up to this point, we just iterate through all of the teams, find all of the .csvs, and for each .csv, we transform it into a document that we want to store in MongoDB. We'll define this function immediately after these notes.</li>
+                    <li>Now we can callback to my previous promise of explaining the reasoning behind "game_id" being a necessary key in our game document. MongoDB automatically assigns a unique "_id" to an *inserted* document, but our .csv's have no such distinction aside from the play-by-play contents itself. The workflow for each .csv is basically: transform into a document -> check if this game isn't already in MongoDB -> if it isn't add it in, otherwise we don't need to do anything. In the check, we are looking to see if there's already a game in MongoDB with the same play-by-play - thus the same game.</li>
+                    <li>Remember that a collection can have adding/removing/updating of documents. Here, we're adding.</li>
+                <br>
+                We are finished with this task once we are done going through the details of turning our .csv into a document by implementing <em>get_info_from_game</em>.
+                <div class="row">
+                    <code class="col-10"><pre>
+def get_info_from_game(season, city, csv):
+    game_data = {}<sup>1</sup>
+    game_data['away_team_info'] = {}
+    game_data['home_team_info'] = {}
+
+    csv_path = os.path.join(PATH_TO_DATA, season, city, 'Csvs', csv)
+
+    list_of_game_rows = convert_csv_to_list(csv_path)<sup>2</sup>
+
+    away_city = list_of_game_rows[0][5]
+    home_city = list_of_game_rows[0][6]
+
+    game_data['created_on'] = datetime.today()<sup>3</sup>
+    game_data['away_team_info']['city'] = away_city
+    game_data['home_team_info']['city'] = home_city
+    game_data['list_of_game_rows'] = list_of_game_rows
+
+    game_rows_as_text = ''.join([''.join(row) for row in list_of_game_rows])<sup>4</sup>
+    game_data['game_id'] = md5(game_rows_as_text).hexdigest()
+
+    return game_data</pre></code>
+                </div>
+                <ol>
+                    <li>Remember that a document is just a dictionary.</li>
+                    <li>Here we're using the service function I defined above.</li>
+                    <li>Here we're making use of the datetime library to mark the exact time of creation of this object.</li>
+                    <li>We use the standard library <em><a href="https://docs.python.org/2/library/md5.html">md5</a></em> to create the hash id for our "game_id" using our play-by-play game rows. We use the .join() function to flatten our list of lists into a string to pass into the md5 function, as the functin doesn't know what to do with a list.</li>
+                </ol>
+                The benefits may not be immediately obvious with this example, as our document has only a minor amount of additional information compared to our .csv. However, the benefits will grow as your project grows; you can add fields that contain meta information about the game (for instance; the starters of the game). Assuming you have a written function that finds the starters of a game, with a .csv you would have to call it every time you wanted to access that information from a game (this is bad practice that grows worser with the run time of the function). With our database instead, you could just call it once, store that in the document in a field, and then access it by the field key whenever you wanted the information.
+            </p>
+            <h4>Running the Data Migration from Csvs to MongoDB</h4>
+            <p>
+                Before running this, you need a server running. You can do this locally by simply opening up a new tab in your Terminal and typing:
+                <div class="row"><code class="col-10">mongod</code></div>
+                Running the following command will get your .csv's in 2013 migrated over to MongoDB:
+                <div class="row"><code class="col-10">PYTHONPATH=. python Tasks/store_csv_info_to_db.py --season=2013</code></div>
+                You should see the following output:
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part3-mongo-analysis/1_storage_output.png" alt="Image of migration output">
+                </div>
+                To see your changes, reproduce the following code in your own Terminal (the commands should be sufficient for you to learn enough by doing):
+                <div class="row"><code class="col-10"><pre>
+mongo<sup>1</sup>
+show dbs<sup>2</sup>
+use CFL_2013<sup>3</sup>
+show collections<sup>4</sup>
+db.games.find().count()<sup>5</sup>
+db.games.findOne()<sup>6</sup>
+</pre></code></div>
+                <ol>
+                    <li>This command is your interface to MongoDB from the command line.</li>
+                    <li>This command lists all databases for this client.</li>
+                    <li>This command uses the 'CFL_2013' database our script created.</li>
+                    <li>This command shows all of the collections in the 'CFL_2013' database; right now, we only have the 'games' collection</li>
+                    <li>This command gives you the number of total game documents we have in the collection; you should have 85, which agrees with the number of games at <a href="http://www.cfl.ca/schedule/year/2013/time_zone/0"> the CFL 2013 schedule website</a>.</li>
+                    <li>This command shows you what one of the game documents looks like.</li>
+                </ol>
+            </p>
+            <h4>Getting All 3rd Down Plays</h4>
+            <p>
+                At this point, there are no new tools needed to be learned to get the job done. We'll use what we learned about <em>pymongo</em> to connect to our database, and for each game, we do a simple conditional check: if the down is a 3rd down and the conveniently stored play type is not a punt, we'll add that play as a row to our resulting output .csv.
+            <div class="row"><code class="col-10"><pre>
+"""
+Usage:
+    get_3rd_down_plays_excl_punts.py (--season=<sn>)
+"""
+
+import csv
+from pymongo import MongoClient
+from docopt import docopt
+
+DOWN_INDEX = 1
+TYPE_INDEX = 2
+
+
+def write_3rd_down_plays_excl_punts_for_season(season):
+    client = MongoClient()
+    season_db = client['CFL_'+season]
+    games_collection = season_db['games']
+
+    filename = '{0}_3rd_down_plays_excl_punts.csv'.format(season)
+    with open(filename, 'w') as f:
+        writer = csv.writer(f)
+        for game in games_collection.find():
+            for row in game['list_of_game_rows']:
+                down = row[DOWN_INDEX].strip()
+                play_type = row[TYPE_INDEX].strip()
+                if down == '3' and play_type != 'Punt':
+                    writer.writerow(row)
+    print 'Done creating {0}'.format(filename)
+
+
+if __name__ == '__main__':
+    args = docopt(__doc__)
+    season = args['--season']
+
+    write_3rd_down_plays_excl_punts_for_season(season=season)
+            </pre></code></div>
+            </p>
+            <h4>The Result</h4>
+            <p>
+                <div class="row">
+                    <img class="col-10" src="../../img/cfl-part3-mongo-analysis/2_3rddownplayscsv.png" alt="Image of final csv of 3rd down plays without punts">
+                </div>
+                There we have it - the 3rd down plays we were looking for, for any season. From here, we could go a number of different directions:
+                <ul>
+                    <li>compare the frequency of play-types on 3rd down situations in the CFL vs. 4th down situations in the NFL</li>
+                    <li>compare the success rates of 3rd down plays that aren't punts in the CFL vs. 4th down plays that aren't punts in the NFL</li>
+                    <li>plot the distribution of attempts by teams; which teams are at the ends of the spectrum in terms of risk?</li>
+                </ul>
+            </p>
+            <p>
+            This work could have been condensed into one script, but if bugs occur in any part of the workflow (to name a few examples: it could break in the scraping when the site changes, or if you wanted to edit the desired output to exclude punt singles as well as punts), then you would need to restart the whole process - wastefully re-requesting HTML data that you've already seen. This process lends to results that are reproducible and scalable, which are attributes you should always strive for when programming. My hope is that this tutorial not only helps you understand why building a system of programs like these is more desirable, but *how* to do actually go about doing it. Thanks for reading!
+            </p>
+            <p>
+                To view the final version of these files, visit <a href="https://github.com/stevenwu4/CFL/blob/master/Tasks/store_csv_info_to_db.py">https://github.com/stevenwu4/CFL/blob/master/Tasks/store_csv_info_to_db.py</a> and <a href="https://github.com/stevenwu4/CFL/blob/master/Analysis/get_3rd_down_plays_excl_punts.py">https://github.com/stevenwu4/CFL/blob/master/Analysis/get_3rd_down_plays_excl_punts.py</a>
+            </p>
+            <p>
+                <a href="../cfl-part1-bs4-selenium">>> Click here to go back to Part 1 in this series</a>
+                <a href="../cfl-part2-mongo-analysis">>> Click here to go back to Part 2 in this series</a>
+            </p>
+        </div>
+    <footer>
+        © Steven Wu<a class="float-right" href="http://minimalcss.com">Design by Minimal</a>
+    </footer>
+    </body>
+</html>
