@@ -47,6 +47,9 @@
                 <br>
                 To finish this tutorial, we're going to migrate our data from a folder & file structure to a more sophisticated method of data storage, using a NoSQL database called <em><a href="https://www.mongodb.org/">MongoDB</a></em>. <a href="http://programmers.stackexchange.com/questions/190482/why-use-a-database-instead-of-just-saving-your-data-to-disk">There are many reasons as to why one should use a database</a>, whether it's a relational (SQL) or non-relational (NoSQL) one, but one example of a pain point we're addressing here is that our current data storage has two copies of each game for a given season. Remember, our end goal is to have a list of 3rd down plays that don't result in punts for a season. To do this, we're going to need to look through every game. If we naively looked through every game in, say, the 2013 season, then we would end up with duplicates of every such row. It would be annoying and inefficient to code up logic to handle the duplicates when we have the ability to design our data source in a better way.
             </p>
+            <p>
+                Although we're using MongoDB in this case, we really could have chosen any number of other databases. I prefer it because a) it works beautifully with Python and b) its lazy, flexible nature (it plugs in a lot of gaps on the fly for you) complements data analysis work that is usually ad-hoc and quick in nature. <a href="https://docs.python.org/2/library/sqlite3.html">sqlite3</a> is a good choice for a SQL alternative.
+            </p>
             <h3>Part 3: Implementation of MongoDB Storage and Analysis Script</h3>
             <p>
                 Before we get into the implementation, there's some knowledge regarding MongoDB worth going over.
