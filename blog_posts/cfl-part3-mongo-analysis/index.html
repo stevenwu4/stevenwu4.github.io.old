@@ -283,6 +283,9 @@ if __name__ == '__main__':
                 <div class="row">
                     <img class="col-10" src="../../img/cfl-part3-mongo-analysis/2_3rddownplayscsv.png" alt="Image of final csv of 3rd down plays without punts">
                 </div>
+                To view the final version of these files, visit <a href="https://github.com/stevenwu4/CFL/blob/master/Tasks/store_csv_info_to_db.py">https://github.com/stevenwu4/CFL/blob/master/Tasks/store_csv_info_to_db.py</a> and <a href="https://github.com/stevenwu4/CFL/blob/master/Analysis/get_3rd_down_plays_excl_punts.py">https://github.com/stevenwu4/CFL/blob/master/Analysis/get_3rd_down_plays_excl_punts.py</a>
+            </p>
+            <p>
                 There we have it - the 3rd down plays we were looking for, for any season. From here, we could go a number of different directions:
                 <ul>
                     <li>compare the frequency of play-types on 3rd down situations in the CFL vs. 4th down situations in the NFL</li>
@@ -292,9 +295,6 @@ if __name__ == '__main__':
             </p>
             <p>
             This work could have been condensed into one script, but if bugs occur in any part of the workflow (to name a few examples: it could break in the scraping when the site changes, or if you wanted to edit the desired output to exclude punt singles as well as punts), then you would need to restart the whole process - wastefully re-requesting HTML data that you've already seen. This process lends to results that are reproducible and scalable, which are attributes you should always strive for when programming. My hope is that this tutorial not only helps you understand why building a system of programs like these is more desirable, but *how* to do actually go about doing it. Thanks for reading!
-            </p>
-            <p>
-                To view the final version of these files, visit <a href="https://github.com/stevenwu4/CFL/blob/master/Tasks/store_csv_info_to_db.py">https://github.com/stevenwu4/CFL/blob/master/Tasks/store_csv_info_to_db.py</a> and <a href="https://github.com/stevenwu4/CFL/blob/master/Analysis/get_3rd_down_plays_excl_punts.py">https://github.com/stevenwu4/CFL/blob/master/Analysis/get_3rd_down_plays_excl_punts.py</a>
             </p>
             <p>
                 <a href="../cfl-part1-bs4-selenium">>> Click here to go back to Part 1 in this series</a>
