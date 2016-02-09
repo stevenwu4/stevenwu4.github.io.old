@@ -1,0 +1,109 @@
+<!doctype html>
+
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Steven Wu</title>
+
+        <meta name="author" content="Steven Wu">
+        <meta name="description" content="Personal website for Steven Wu, with blog posts about data">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../css/minimal.css">
+        <link rel="stylesheet" href="../css/blog.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+          ga('create', 'UA-58456323-1', 'auto');
+          ga('send', 'pageview');
+        </script>
+    </head>
+
+    <body class="main">
+        <div id="banner"></div>
+        <header id="header" role="banner">
+            <h1><a href="../">Steven Wu</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="../projects"><i class="fa fa-list-ol"></i> Projects</a></li>
+                    <li><a href="http://seecis.com"><i class="fa fa-eye"></i> SeeCIS</a></li>
+                    <li><a href="../services"><i class="fa fa-child"></i> Services</a></li>
+                    <li><a href="../blog_posts/"><i class="fa fa-commenting-o"></i> Blog</a></li>
+                    <li><a href="https://github.com/stevenwu4"><i class="fa fa-github"></i> GitHub</a></li>
+                    <li><a href="https://www.linkedin.com/profile/view?id=165873568"><i class="fa fa-linkedin-square"></i> LinkedIn</a></li>
+                    <li><a href="../Steven_Wu_Resume.pdf"><i class="fa fa-file-pdf-o"></i> Resume</a></li>
+                    <li><a href="mailto:steven.wu.work@gmail.com?subject=Emailing from your website"><i class="fa fa-envelope"></i> Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <h2>Full Stack Projects</h2>
+
+        <b>SeeCIS</b>
+        <ul>
+            <li><a href="http://seecis.com"><i class="fa fa-link"></i>: http://seecis.com</li></a>
+            <li><i class="fa fa-wrench"></i>: Python, Flask, MongoDB, HTML, CSS, JavaScript, D3.js, Digital Ocean</li>
+            <li>This started from my efforts to automate getting +/- from CIS play-by-play. All information can be found on the landing page, in the hyperlink above.</li>
+        </ul>
+
+        <b>Demo of NSERC Thesis</b>
+        <ul>
+            <li><a href="http://stevenwu.pythonanywhere.com"><i class="fa fa-link"></i>: http://stevenwu.pythonanywhere.com</a></li>
+            <li><i class="fa fa-wrench"></i>: Python, Flask, MongoDB, HTML, CSS</li>
+            <li>I submitted an (eventually winning) idea for NSERC CGS-M and this was the result of proving out the feasibility of my idea (in terms of data collection and organization).</li>
+        </ul>
+
+        <h2>Scientific Programming Projects</h2>
+
+        <b>Applying Evolutionary Algorithms to Neural Network Training</b>
+        <ul>
+            <li><i class="fa fa-wrench"></i>: MATLAB, LaTeX</li>
+            <li>For CMPT726, our final project idea was to try evolutionary algorithms to replace backpropagation in training neural networks. Evolutionary algorithms are known to be good alternatives to descent methods, and there was published work for us to follow. We ended up trying out some novel tweaks in using simulated annealing to train the neural network, and we followed up on another paper's suggested future work in implementing genetic algorithms to tune the hyperparameters. We compared the results to the baseline stochastic gradient descent method of training, in a 7 page paper in the NIPS style guide.</li>
+        </ul>
+
+        <b>NHL Trades and Trust Research</b>
+        <ul>
+            <li><i class="fa fa-wrench"></i>: Python (Pandas, networkx), R, LaTeX</li>
+            <li>A business professor wanted data analysis performed on a compiled dataset of trades and front-office movement between NHL teams. With a deadline of less than two weeks, I wrote software for joining the datasets, creating new explanatory variables that captured intuitive ideas, and tested various log-linear models handling overdispersion - finally compiling all results and conclusions in a LaTeX document.</li>
+        </ul>
+
+
+        <b>AI Snake</b>
+        <ul>
+            <li><a href="https://github.com/stevenwu4/ai-snake"><i class="fa fa-link"></i>: https://github.com/stevenwu4/ai-snake</a></li>
+            <li><i class="fa fa-wrench"></i>: Python</li>
+            <li>My first 4th year CS course that required individual programming of a project from scratch. We were required to implement the popular snake game (where you drive a snake using your arrow keys to eat food, and each food results in the tail growing by 1) - except the snake had to drive itself using uninformed searches (BFS, DFS) and then A* search. I designed the state space and coded the implementation with a command line UI, with reporting that allowed for comparing between the performance of the searches. The grid dimensions, number of obstacles that the snake must avoid, number of iterations before being finished, and search type are all configurable parameters.</li>
+        </ul>
+
+        <h2>Other Projects</h2>
+
+        <b>CFL Data</b>
+        <ul>
+            <li><a href="http://cqads.carleton.ca/blog"><i class="fa fa-link"></i>: http://cqads.carleton.ca/blog</a></li>
+            <li><a href="https://github.com/stevenwu4/CFL"><i class="fa fa-link"></i>: https://github.com/stevenwu4/CFL</a></li>
+            <li><i class="fa fa-wrench"></i>: Python, MongoDB</li>
+            <li>While working for Carleton's CQADS, a fellow colleague interested in sports statistics wanted to get his hands on a CFL dataset. Since there were none available, I scraped it for him and used my code as the main resource for blog posts that the CQADS bought for their blog. </li>
+        </ul>
+
+        <b>@astro_tweet_bot</b>
+        <ul>
+            <li><a href="https://github.com/stevenwu4/astrotweetbot"><i class="fa fa-link"></i>: https://github.com/stevenwu4/astrotweetbot</a></li>
+            <li><i class="fa fa-wrench"></i>: Python, Flask, Twitter API, Openshift</li>
+            <li>This was the proud result of my first hackathon with two teammates (one from University of Waterloo, the other from Carleton University), for <a href="https://2014.spaceappschallenge.org/">NASA Hackathon 2014</a>. The specific challenge we addressed was the <a href="https://2014.spaceappschallenge.org/challenge/alert-alert/">Alert! Alert!</a> challenge, which asked for a central place for information of sky phenomena to observe. We chose to centralize the information via a Twitterbot, that would provide a single location for you to Tweet at if you wanted to observe something cool in the sky from where you are. Not only does this allow for subscription/notification capability of sky events, but it posts the best sky/space photo from Reddit everyday.</li>
+        </ul>
+
+        <b>Maple Crytography Output Parser</b>
+        <ul>
+            <li><a href="https://github.com/stevenwu4/maple-crypto-parser"><i class="fa fa-link"></i>: https://github.com/stevenwu4/maple-crypto-parser</a></li>
+            <li><i class="fa fa-wrench"></i>: Python</li>
+            <li>My girlfriend was a research assistant for Dr. Steven Wang over one summer, and was tasked with basically finding patterns in a maze of output. The hypothesis was about factoring cyclotomic polynomials over finite fields, and Maple was used to factor specific polynomials. She was manually surveying each factored polynomial, sorting it, and recording the number of factors for each degree. I decided to write a program that would do all of that work for her, to help save her time and allow her to get to the interesting bits of her research.</li>
+        </ul>
+    <footer>
+            © Steven Wu<a class="float-right" href="http://minimalcss.com">Design by Minimal</a>
+    </footer>
+    </body>
+</html>
