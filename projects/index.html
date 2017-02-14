@@ -45,6 +45,26 @@
             Below are all of my projects that are a result of either accomplishing some goal or learning something new in the field of software, web development, statistics, and data.
         </p>
 
+        <h2>Statistics Projects</h2>
+
+        <b>Optimal Vancouver Brewery Tour</b>
+        <ul>
+            <li><i class="fa fa-wrench"></i>: R, Google Maps/Places API</li>
+            <li>For STAT853 (Stat Computing), our final project was to use a dataset consisting of beer ratings to build a data-driven brewery tour for the Greater Vancouver Area (GVA). With a partner, we built functions in R to identify and locate breweries in the dataset that are in the GVA, developed numerous heuristics to quantify each brewery, and applied Traveling Salesman Problem algorithms to discover optimal routes based on various starting and end points.</li>
+        </ul>
+
+        <b>Recommendation Engine for Canadian Stats Graduate Programs</b>
+        <ul>
+            <li><i class="fa fa-wrench"></i>: R, PDF parsing, LDA/CTM, TD-IDF, text analytics</li>
+            <li>For STAT853 (Stat Computing), one project had us parse years of publicly available conference guides that included abstracts from students and professors presenting at SSC. We built a custom PDF parser for the SSC guide format, and compiled all of the abstracts into a single corpus. Applying the usual preprocessing steps for a text analytics pipeline (removing stop words, stemming), we used cross validation and LDA to identify how many topics we believe are in our corpus. After coming up with sensible topic names based on the top <i>n</i> terms in each topic (topics included Bayesian Methods, Financial Analysis, Statistical Computing), we trimmed the document term matrix using cutoff scores of TF-IDF values for each word and trained a model using LDA to obtain our final assigned topics for each abstract. For each school, we generated histograms of their topic distributions and word clouds of the most popular words seen in the abstracts coming from that school.</li>
+        </ul>
+
+        <b>NHL Trades and Trust Research</b>
+        <ul>
+            <li><i class="fa fa-wrench"></i>: Python (Pandas, networkx), R, LaTeX</li>
+            <li>A business professor wanted data analysis performed on a compiled dataset of trades and front-office movement between NHL teams. With a deadline of less than two weeks, I wrote software for joining the datasets, creating new explanatory variables that captured intuitive ideas, and tested various log-linear models handling overdispersion - finally compiling all results and conclusions in a LaTeX document.</li>
+        </ul>
+
         <h2>Full Stack Projects</h2>
 
         <b>SeeCIS</b>
@@ -61,20 +81,13 @@
             <li>I submitted an (eventually winning) idea for NSERC CGS-M and this was the result of proving out the feasibility of my idea (in terms of data collection and organization).</li>
         </ul>
 
-        <h2>Scientific Programming Projects</h2>
+        <h2>Algorithms Projects</h2>
 
         <b>Applying Evolutionary Algorithms to Neural Network Training</b>
         <ul>
             <li><i class="fa fa-wrench"></i>: MATLAB, LaTeX</li>
             <li>For CMPT726, our final project idea was to try evolutionary algorithms to replace backpropagation in training neural networks. Evolutionary algorithms are known to be good alternatives to descent methods, and there was published work for us to follow. We ended up trying out some novel tweaks in using simulated annealing to train the neural network, and we followed up on another paper's suggested future work in implementing genetic algorithms to tune the simulated annealing hyperparameters. Running a series of experiments, we compared the results (in terms of accuracy and runtime) to the baseline stochastic gradient descent method of training, in a 7 page paper in the NIPS style guide.</li>
         </ul>
-
-        <b>NHL Trades and Trust Research</b>
-        <ul>
-            <li><i class="fa fa-wrench"></i>: Python (Pandas, networkx), R, LaTeX</li>
-            <li>A business professor wanted data analysis performed on a compiled dataset of trades and front-office movement between NHL teams. With a deadline of less than two weeks, I wrote software for joining the datasets, creating new explanatory variables that captured intuitive ideas, and tested various log-linear models handling overdispersion - finally compiling all results and conclusions in a LaTeX document.</li>
-        </ul>
-
 
         <b>AI Snake</b>
         <ul>
@@ -83,7 +96,7 @@
             <li>My first 4th year CS course that required individual programming of a project from scratch. We were required to implement the popular snake game (where you drive a snake using your arrow keys to eat food, and each food results in the tail growing by 1) - except the snake had to drive itself using uninformed searches (BFS, DFS) and then A* search. I designed the state space and coded the implementation with a command line UI, with reporting that allowed for comparing between the performance of the searches. The grid dimensions, number of obstacles that the snake must avoid, number of iterations before being finished, and search type are all configurable parameters.</li>
         </ul>
 
-        <h2>Other Projects</h2>
+        <h2>Data Projects</h2>
 
         <b>CFL Data</b>
         <ul>
